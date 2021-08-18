@@ -1,0 +1,344 @@
+#+PROPERTY: header-args:emacs-lisp :tangle /home/juanpablo/.emacs
+
+* Startup
+* Package Management
+
+#+begin_src emacs-lisp
+;; Initialize package sources
+(require 'package)
+
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                         ("org" . "https://orgmode.org/elpa/")
+                         ("elpa" . "https://elpa.gnu.org/packages/")))
+
+(package-initialize)
+(unless package-archive-contents
+  (package-refresh-contents))
+
+  ;; Initialize use-package on non-Linux platforms
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+
+(require 'use-package)
+(setq use-package-always-ensure t)
+
+(add-to-list 'load-path "~/.emacs.d/lisp/")
+#+end_src
+
+* UI
+
+** Theme
+
+#+begin_src emacs-lisp
+(use-package doom-themes
+  :init (load-theme 'doom-palenight t))
+
+(use-package all-the-icons)
+
+(use-package doom-modeline
+  :init (doom-modeline-mode 1)
+  :custom ((doom-modeline-height 15)))
+#+end_src
+
+** Tweaks
+ #+begin_src emacs-lisp
+ (setq inhibit-startup-message t)
+
+ (scroll-bar-mode -1)        ; Disable visible scrollbar
+ (tool-bar-mode -1)          ; Disable the toolbar
+ (tooltip-mode -1)           ; Disable tooltips
+ (set-fringe-mode 10)        ; Give some breathing room
+
+ (menu-bar-mode -1)            ; Disable the menu bar
+
+ ;; Set up the visible bell
+ (setq visible-bell t)
+
+ (column-number-mode)
+ (global-display-line-numbers-mode t)
+
+ ;; Set frame transparency
+ (set-frame-parameter (selected-frame) 'alpha 95)
+ (add-to-list 'default-frame-alist `(alpha . ,95))
+ ;;(set-frame-parameter (selected-frame) 'fullscreen 'maximized)
+ ;;(add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+ ;; Disable line numbers for some modes
+ (dolist (mode '(org-mode-hook
+                 term-mode-hook
+                 shell-mode-hook
+                 treemacs-mode-hook
+                 eshell-mode-hook))
+   (add-hook mode (lambda () (display-line-numbers-mode 0))))
+ #+end_src
+
+** Fonts
+
+#+begin_src emacs-lisp
+(set-face-attribute 'default nil :font "Iosevka" :height 140)
+
+;; Set the fixed pitch face
+(set-face-attribute 'fixed-pitch nil :font "Iosevka" :height 140)
+
+;; Set the variable pitch face
+(set-face-attribute 'variable-pitch nil :font "Iosevka Aile" :height 160 :weight 'regular)
+#+end_src
+
+** Disable Bell
+#+begin_src emacs-lisp
+;;Avoid having noisy sounds when scrolling to the bottom of a buffer
+(defun my-bell-function ()
+  (unless (memq this-command
+		'(isearch-abort abort-recursive-edit exit-minibuffer
+				keyboard-quit mwheel-scroll down up next-line previous-line
+				backward-char forward-char))
+    (ding)))
+(setq ring-bell-function 'my-bell-function)
+(setq ring-bell-function 'ignore)
+#+end_src
+* Keybindings
+#+begin_src emacs-lisp
+(use-package general
+  :general
+  ("C-s" 'swiper
+   "C-c p" 'projectile-command-map
+   "M-o" 'ace-window   
+   "M-s" 'avy-goto-char
+   "C-M-y w" 'aya-create
+   "C-M-y y" 'aya-expand
+   "C-M-y s" 'aya-persist-snippet)
+   (:keymaps 'minibuffer-local-map
+    "C-r" 'counsel-minibuffer-history)
+  )
+
+
+#+end_src
+
+* Ivy
+** Basics and Counsel
+
+ #+begin_src emacs-lisp
+ (use-package ivy
+   :diminish
+   :config
+   (ivy-mode 1))
+
+ (use-package ivy-rich
+   :after ivy
+   :init
+   (ivy-rich-mode 1))
+
+ (use-package counsel
+   :custom
+   (counsel-linux-app-format-function #'counsel-linux-app-format-function-name-only)
+   :config
+   (counsel-mode 1))
+ #+end_src
+
+** Prescient
+
+#+begin_src emacs-lisp
+(use-package ivy-prescient
+  :after counsel
+  :custom
+  (ivy-prescient-enable-filtering nil)
+  :config
+  ;; Uncomment the following line to have sorting remembered across sessions!
+  ;(prescient-persist-mode 1)
+  (ivy-prescient-mode 1))
+#+end_src
+
+* Org
+
+#+begin_src emacs-lisp
+(defun efs/org-font-setup ()
+  ;; Replace list hyphen with dot
+  (font-lock-add-keywords 'org-mode
+                          '(("^ *\\([-]\\) "
+                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+
+  ;; Set faces for heading levels
+  (dolist (face '((org-level-1 . 1.2)
+                  (org-level-2 . 1.1)
+                  (org-level-3 . 1.05)
+                  (org-level-4 . 1.0)
+                  (org-level-5 . 1.1)
+                  (org-level-6 . 1.1)
+                  (org-level-7 . 1.1)
+                  (org-level-8 . 1.1)))
+    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+
+  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+  (set-face-attribute 'org-block nil    :foreground nil :inherit 'fixed-pitch)
+  (set-face-attribute 'org-table nil    :inherit 'fixed-pitch)
+  (set-face-attribute 'org-formula nil  :inherit 'fixed-pitch)
+  (set-face-attribute 'org-code nil     :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-table nil    :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-checkbox nil  :inherit 'fixed-pitch)
+  (set-face-attribute 'line-number nil :inherit 'fixed-pitch)
+  (set-face-attribute 'line-number-current-line nil :inherit 'fixed-pitch))
+
+(defun efs/org-mode-setup ()
+  (org-indent-mode)
+  (variable-pitch-mode 1)
+  (visual-line-mode 1))
+
+(use-package org
+  :pin org
+  :commands (org-capture org-agenda)
+  :hook (org-mode . efs/org-mode-setup)
+  :config
+  (setq org-ellipsis " ▾")
+  (efs/org-font-setup))
+
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode)
+  :custom
+  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+#+end_src
+
+* Projectile
+#+begin_src emacs-lisp
+(use-package projectile
+  :config
+  (projectile-global-mode)
+  (setq projectile-completion-system 'ivy)) 
+#+end_src
+* Magit
+#+begin_src emacs-lisp
+(use-package magit)
+#+end_src
+* EAF
+* Movement
+** Avy
+#+begin_src emacs-lisp
+(use-package avy)
+#+end_src
+
+** Ace Window
+#+begin_src emacs-lisp
+(use-package ace-window)
+#+end_src
+* Aide-memoire
+** Yasnippets
+#+begin_src emacs-lisp
+(use-package yasnippet
+  :init
+  (setq yas-snippet-dirs
+	'("~/.emacs.d/snippets") ;; personal snippets
+	))
+
+(use-package auto-yasnippet)
+
+#+end_src
+** Hydra
+* IDE
+* Mail
+* Writing
+** Atomic Emacs
+#+begin_src emacs-lisp
+(use-package atomic-chrome
+  :ensure t
+  :config
+  (atomic-chrome-start-server)
+  (setq atomic-chrome-buffer-open-style 'frame)
+  (setq atomic-chrome-default-major-mode 'python-mode)
+  (setq atomic-chrome-url-major-mode-alist
+	'(("redmine" . textile-mode)))
+)
+#+end_src
+
+#+RESULTS:
+: t
+* Tweaks
+** Clean Folders
+
+#+begin_src emacs-lisp
+;; NOTE: If you want to move everything out of the ~/.emacs.d folder
+;; reliably, set `user-emacs-directory` before loading no-littering!
+;(setq user-emacs-directory "~/.cache/emacs")
+
+(use-package no-littering)
+
+;; no-littering doesn't set this by default so we must place
+;; auto save files in the same path as it uses for sessions
+(setq auto-save-file-name-transforms
+      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+#+end_src
+** Ox-hugo
+#+BEGIN_SRC emacs-lisp :results silent
+(use-package ox-hugo
+  :ensure t
+  :after ox)
+#+END_SRC
+
+#+RESULTS:
+: org-define-error
+* Lisp Helpers
+** F-strings
+#+begin_src emacs-lisp
+(defmacro f-string (fmt)
+  "Like `s-format' but with format fields in it.
+FMT is a string to be expanded against the current lexical
+environment. It is like what is used in `s-lex-format', but has
+an expanded syntax to allow format-strings. For example:
+${user-full-name 20s} will be expanded to the current value of
+the variable `user-full-name' in a field 20 characters wide.
+  (let ((f (sqrt 5)))  (f-string \"${f 1.2f}\"))
+  will render as: 2.24
+This function is inspired by the f-strings in Python 3.6, which I
+enjoy using a lot.
+"
+  (let* ((matches (s-match-strings-all"${\\(?3:\\(?1:[^} ]+\\) *\\(?2:[^}]*\\)\\)}" fmt))
+         (agetter (cl-loop for (m0 m1 m2 m3) in matches
+                        collect `(cons ,m3  (format (format "%%%s" (if (string= ,m2 "")
+                                                                      (if s-lex-value-as-lisp "S" "s")
+                                                                   ,m2))
+                                                  (symbol-value (intern ,m1)))))))
+
+    `(s-format ,fmt 'aget (list ,@agetter))))
+#+end_src
+
+#+RESULTS:
+: f-string
+** Remote Jupyter tools
+#+begin_src emacs-lisp
+(defun execute-command-remote (remote path command)
+  (setq full-command (f-string "cd /ssh:${remote}:${path};${command}"))
+  (eshell-command full-command)
+  )
+
+(defun open-toretto-jupyter ()
+  (interactive)
+  (setq toretto "juanpablo@192.168.200.222")
+  (setq jp-folder "/home/juanpablo/team-ds/jp/")
+  (setq launch-jupyter-docker "bash run_jupyter_jp.sh")
+  (setq jupyter-port "9018")
+  (execute-command-remote toretto jp-folder launch-jupyter-docker)
+  (eshell-command (f-string "ssh -N -f -L localhost:${jupyter-port}:localhost:${jupyter-port} ${toretto}"))
+  (ein:notebooklist-login "9018" nil)
+  (switch-to-buffer (f-string "*ein:notebooklist http://127.0.0.1:${jupyter-port}*"))
+  )
+
+(defun open-gpu-jupyter ()
+  (interactive)
+  (setq toretto "kwali@3.224.192.108")
+  (setq jp-folder "/home/kwali/pytorch_models/")
+  (setq launch-jupyter-docker "bash run_jupyter_jp.sh")
+  (setq jupyter-port "9018")
+  (execute-command-remote toretto jp-folder launch-jupyter-docker)
+  (eshell-command (f-string "ssh -N -f -L localhost:${jupyter-port}:localhost:${jupyter-port} ${toretto}"))
+  (ein:notebooklist-login "9018" nil)
+  (switch-to-buffer (f-string "*ein:notebooklist http://127.0.0.1:${jupyter-port}*"))
+  )
+#+end_src
+
+#+RESULTS:
+: open-gpu-jupyter
+
