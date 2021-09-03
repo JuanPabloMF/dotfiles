@@ -22,11 +22,15 @@
 (require 'use-package)
 (setq use-package-always-ensure t)
 
-(add-to-list 'load-path "~/.emacs.d/lisp/")
+(add-to-list 'load-path "~/.emacs.d/site-lisp/")
+
+
 #+end_src
 
-* UI
+#+RESULTS:
+| ~/.emacs.d/site-lisp/ | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/ | ~/.emacs.d/site-lisp/emacs-application-framework | ~/.emacs.d/lisp/ | /home/juanpablo/.emacs.d/elpa/ace-window-20200606.1259 | /home/juanpablo/.emacs.d/elpa/atomic-chrome-20210221.59 | /home/juanpablo/.emacs.d/elpa/auto-yasnippet-20191015.942 | /home/juanpablo/.emacs.d/elpa/avy-20201226.1734 | /home/juanpablo/.emacs.d/elpa/command-log-mode-20160413.447 | /home/juanpablo/.emacs.d/elpa/counsel-20210817.1505 | /home/juanpablo/.emacs.d/elpa/docker-tramp-20210729.508 | /home/juanpablo/.emacs.d/elpa/doom-modeline-20210807.922 | /home/juanpablo/.emacs.d/elpa/all-the-icons-20210728.2330 | /home/juanpablo/.emacs.d/elpa/doom-themes-20210731.818 | /home/juanpablo/.emacs.d/elpa/epresent-20160411.201 | /home/juanpablo/.emacs.d/elpa/general-20200516.50 | /home/juanpablo/.emacs.d/elpa/helm-c-yasnippet-20210330.16 | /home/juanpablo/.emacs.d/elpa/helm-20210816.1110 | /home/juanpablo/.emacs.d/elpa/helm-core-20210815.1700 | /home/juanpablo/.emacs.d/elpa/hide-lines-20210513.1636 | /home/juanpablo/.emacs.d/elpa/ivy-prescient-20210425.1720 | /home/juanpablo/.emacs.d/elpa/ivy-rich-20210409.931 | /home/juanpablo/.emacs.d/elpa/magit-20210818.813 | /home/juanpablo/.emacs.d/elpa/git-commit-20210806.1607 | /home/juanpablo/.emacs.d/elpa/magit-section-20210813.904 | /home/juanpablo/.emacs.d/elpa/no-littering-20210619.2158 | /home/juanpablo/.emacs.d/elpa/org-bullets-20200317.1740 | /home/juanpablo/.emacs.d/elpa/org-download-20210118.958 | /home/juanpablo/.emacs.d/elpa/async-20210501.1527 | /home/juanpablo/.emacs.d/elpa/org-tree-slide-20210224.1213 | /home/juanpablo/.emacs.d/elpa/ox-hugo-20210727.117 | /home/juanpablo/.emacs.d/elpa/popup-20210625.400 | /home/juanpablo/.emacs.d/elpa/prescient-20210724.1756 | /home/juanpablo/.emacs.d/elpa/projectile-20210811.435 | /home/juanpablo/.emacs.d/elpa/shrink-path-20190208.1335 | /home/juanpablo/.emacs.d/elpa/f-20210624.1103 | /home/juanpablo/.emacs.d/elpa/dash-20210708.2009 | /home/juanpablo/.emacs.d/elpa/s-20210616.619 | /home/juanpablo/.emacs.d/elpa/swiper-20210521.1319 | /home/juanpablo/.emacs.d/elpa/ivy-20210730.1743 | /home/juanpablo/.emacs.d/elpa/transient-20210816.1704 | /home/juanpablo/.emacs.d/elpa/use-package-20210207.1926 | /home/juanpablo/.emacs.d/elpa/bind-key-20210210.1609 | /home/juanpablo/.emacs.d/elpa/websocket-20210110.17 | /home/juanpablo/.emacs.d/elpa/with-editor-20210524.1654 | /home/juanpablo/.emacs.d/elpa/yasnippet-20200604.246 | /etc/emacs | /usr/local/share/emacs/27.1/site-lisp | /usr/local/share/emacs/site-lisp | /usr/share/emacs/site-lisp/dictionaries-common | /usr/share/emacs/27.1/site-lisp | /usr/share/emacs/site-lisp | /usr/share/emacs/27.1/lisp | /usr/share/emacs/27.1/lisp/vc | /usr/share/emacs/27.1/lisp/url | /usr/share/emacs/27.1/lisp/textmodes | /usr/share/emacs/27.1/lisp/progmodes | /usr/share/emacs/27.1/lisp/play | /usr/share/emacs/27.1/lisp/org | /usr/share/emacs/27.1/lisp/nxml | /usr/share/emacs/27.1/lisp/net | /usr/share/emacs/27.1/lisp/mh-e | /usr/share/emacs/27.1/lisp/mail | /usr/share/emacs/27.1/lisp/leim | /usr/share/emacs/27.1/lisp/language | /usr/share/emacs/27.1/lisp/international | /usr/share/emacs/27.1/lisp/image | /usr/share/emacs/27.1/lisp/gnus | /usr/share/emacs/27.1/lisp/eshell | /usr/share/emacs/27.1/lisp/erc | /usr/share/emacs/27.1/lisp/emulation | /usr/share/emacs/27.1/lisp/emacs-lisp | /usr/share/emacs/27.1/lisp/cedet | /usr/share/emacs/27.1/lisp/calendar | /usr/share/emacs/27.1/lisp/calc | /usr/share/emacs/27.1/lisp/obsolete | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/core | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/extension | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/img | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/airshare | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/browser | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/camera | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/demo | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-browser | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-manager | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-sender | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/image-viewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/jupyter | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/markdown-previewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/mermaid | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/mindmap | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/org-previewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/pdf-viewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/terminal | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/video-player | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/core/js | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/browser/aria2-ng | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-manager/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-manager/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src/store | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src/svg | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music/src/svg | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor/src/store | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo/src/assets | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo/src/components |
 
+* UI
 ** Theme
 
 #+begin_src emacs-lisp
@@ -96,22 +100,52 @@
 (setq ring-bell-function 'my-bell-function)
 (setq ring-bell-function 'ignore)
 #+end_src
+* Lisp
+
+#+begin_src emacs-lisp
+(defmacro my/general-define-key (args)
+  `(progn ,@(mapcar (lambda (arglist)
+		      `(general-def ,@arglist :package 'general))
+		    args)))
+
+(defmacro f-string (fmt)
+  "Like `s-format' but with format fields in it.
+FMT is a string to be expanded against the current lexical
+environment. It is like what is used in `s-lex-format', but has
+an expanded syntax to allow format-strings. For example:
+${user-full-name 20s} will be expanded to the current value of
+the variable `user-full-name' in a field 20 characters wide.
+  (let ((f (sqrt 5)))  (f-string \"${f 1.2f}\"))
+  will render as: 2.24
+This function is inspired by the f-strings in Python 3.6, which I
+enjoy using a lot.
+"
+  (let* ((matches (s-match-strings-all"${\\(?3:\\(?1:[^} ]+\\) *\\(?2:[^}]*\\)\\)}" fmt))
+         (agetter (cl-loop for (m0 m1 m2 m3) in matches
+                        collect `(cons ,m3  (format (format "%%%s" (if (string= ,m2 "")
+                                                                      (if s-lex-value-as-lisp "S" "s")
+                                                                   ,m2))
+                                                  (symbol-value (intern ,m1)))))))
+
+    `(s-format ,fmt 'aget (list ,@agetter))))
+#+end_src
 * Keybindings
 #+begin_src emacs-lisp
+
 (use-package general
-  :general
-  ("C-s" 'swiper
-   "C-c p" 'projectile-command-map
-   "M-o" 'ace-window   
-   "M-s" 'avy-goto-char
-   "C-M-y w" 'aya-create
-   "C-M-y y" 'aya-expand
-   "C-M-y s" 'aya-persist-snippet)
-   (:keymaps 'minibuffer-local-map
-    "C-r" 'counsel-minibuffer-history)
-  )
-
-
+  :config
+  (my/general-define-key
+   (("C-s" 'swiper
+     "C-x C-b" 'counsel-switch-buffer
+     "C-c p" 'projectile-command-map
+     "M-o" 'ace-window   
+     "M-s" 'avy-goto-char
+     "C-M-y w" 'aya-create
+     "C-M-y y" 'aya-expand
+     "C-M-y s" 'aya-persist-snippet)
+    (:keymaps 'minibuffer-local-map
+	      "C-r" 'counsel-minibuffer-history)
+    )))
 #+end_src
 
 * Ivy
@@ -126,7 +160,8 @@
  (use-package ivy-rich
    :after ivy
    :init
-   (ivy-rich-mode 1))
+   (ivy-rich-mode 1)
+   (setq ivy-rich-parse-remote-buffer nil))
 
  (use-package counsel
    :custom
@@ -134,6 +169,9 @@
    :config
    (counsel-mode 1))
  #+end_src
+
+ #+RESULTS:
+ : t
 
 ** Prescient
 
@@ -147,6 +185,45 @@
   ;(prescient-persist-mode 1)
   (ivy-prescient-mode 1))
 #+end_src
+
+* Tramp
+#+begin_src emacs-lisp
+(use-package docker-tramp)
+
+(defun remote-shell--dummy1 (path)
+    (interactive "sPath:")
+    (let ((default-directory path) (current-prefix-arg '(4)))
+      (call-interactively 'shell)))
+
+(defun remote-shell--dummy2 (path)
+    (interactive (list (read-directory-name "Default directory: " nil nil t default-directory)))
+    (let ((default-directory path) (current-prefix-arg '(4)))
+      (call-interactively 'shell)))
+
+(load-file "/home/juanpablo/.emacs.d/elpa/counsel-20210817.1505/counsel.el")
+(defun open-shell-new-buffer (path)
+  (let ((default-directory path) (current-prefix-arg '(4)))
+    (call-interactively 'shell)
+    )
+  )
+(defun remote-shell ()
+  (interactive)
+  (ivy-read "Open shell in path:" #'read-file-name-internal
+            :matcher #'counsel--find-file-matcher
+            :initial-input nil
+            :action #'open-shell-new-buffer
+            :preselect (counsel--preselect-file)
+            :require-match 'confirm-after-completion
+            :history 'file-name-history
+            :keymap counsel-find-file-map
+            :caller #'remote-shell)
+  )
+
+
+#+end_src
+
+#+RESULTS:
+: remote-shell
 
 * Org
 
@@ -192,9 +269,21 @@
   :hook (org-mode . efs/org-mode-setup)
   :config
   (setq org-ellipsis " ▾")
-  (efs/org-font-setup))
+  (efs/org-font-setup)
+  (org-babel-do-load-languages
+    'org-babel-load-languages
+    '((emacs-lisp . t)
+      (python . t)
+      (shell . t)))
+  (setq org-confirm-babel-evaluate nil)
+)
+
+
 
 #+end_src
+
+#+RESULTS:
+
 
 #+begin_src emacs-lisp
 (use-package org-bullets
@@ -203,18 +292,50 @@
   (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
 #+end_src
 
+#+begin_src emacs-lisp
+(use-package org-download
+  :init
+  (with-eval-after-load 'org
+    (org-download-enable))
+)
+#+end_src
+
+#+RESULTS:
+
 * Projectile
 #+begin_src emacs-lisp
 (use-package projectile
   :config
   (projectile-global-mode)
-  (setq projectile-completion-system 'ivy)) 
+  (setq projectile-completion-system 'ivy))
 #+end_src
 * Magit
 #+begin_src emacs-lisp
 (use-package magit)
 #+end_src
+* Shells
+#+begin_src emacs-lisp
+(use-package vterm)
+#+end_src
+
+#+RESULTS:
+
 * EAF
+
+#+begin_src emacs-lisp
+(use-package eaf
+  :load-path "~/.emacs.d/site-lisp/emacs-application-framework" ; Set to "/usr/share/emacs/site-lisp/eaf" if installed from AUR
+  :custom
+  (eaf-browser-continue-where-left-off t)
+  :config
+  (setq eaf-browser-enable-adblocker t)
+  (require 'eaf-browser)
+)
+#+end_src
+
+#+RESULTS:
+: t
+
 * Movement
 ** Avy
 #+begin_src emacs-lisp
@@ -256,6 +377,38 @@
 
 #+RESULTS:
 : t
+** Org Tree Slide
+#+begin_src emacs-lisp
+(use-package hide-lines)
+
+(defun my:hide-headers ()
+  ;; hide block begin/end markers
+  ;; not sure why but hide-lines *really* needs
+  ;; loaded each time we call this..
+  (load-library "hide-lines")
+  (hide-lines-matching
+   "#\\+\\(BEGIN\\|END\\)_\\(SRC\\|EXAMPLE\\|VERSE\\|QUOTE\\)")
+  (hide-lines-matching
+   "#\\+ATTR_ORG"))
+
+(defun my:show-headers ()
+  (hide-lines-show-all)
+  (org-show-all))
+
+(use-package command-log-mode)
+
+(use-package org-tree-slide
+  :custom
+  (org-image-actual-width nil)
+  (org-tree-slide-header nil)
+  (org-tree-slide-heading-emphasis t)
+  ;:hook ((org-tree-slide-play . my:hide-headers)
+  ;(org-tree-slide-stop . my:show-headers))
+  )
+#+end_src
+
+#+RESULTS:
+
 * Tweaks
 ** Clean Folders
 
@@ -283,26 +436,7 @@
 * Lisp Helpers
 ** F-strings
 #+begin_src emacs-lisp
-(defmacro f-string (fmt)
-  "Like `s-format' but with format fields in it.
-FMT is a string to be expanded against the current lexical
-environment. It is like what is used in `s-lex-format', but has
-an expanded syntax to allow format-strings. For example:
-${user-full-name 20s} will be expanded to the current value of
-the variable `user-full-name' in a field 20 characters wide.
-  (let ((f (sqrt 5)))  (f-string \"${f 1.2f}\"))
-  will render as: 2.24
-This function is inspired by the f-strings in Python 3.6, which I
-enjoy using a lot.
-"
-  (let* ((matches (s-match-strings-all"${\\(?3:\\(?1:[^} ]+\\) *\\(?2:[^}]*\\)\\)}" fmt))
-         (agetter (cl-loop for (m0 m1 m2 m3) in matches
-                        collect `(cons ,m3  (format (format "%%%s" (if (string= ,m2 "")
-                                                                      (if s-lex-value-as-lisp "S" "s")
-                                                                   ,m2))
-                                                  (symbol-value (intern ,m1)))))))
 
-    `(s-format ,fmt 'aget (list ,@agetter))))
 #+end_src
 
 #+RESULTS:
