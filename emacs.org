@@ -1,7 +1,25 @@
 #+PROPERTY: header-args:emacs-lisp :tangle /home/juanpablo/.emacs
 
-* Startup
-* Package Management
+* Base Config
+** Startup
+** Native Comp
+#+begin_src emacs-lisp
+    (when (and (fboundp 'native-comp-available-p)
+             (native-comp-available-p))
+
+      (progn
+        (setq native-comp-async-report-warnings-errors nil)
+        (setq comp-deferred-compilation t)
+        (add-to-list 'native-comp-eln-load-path (expand-file-name "eln-cache/" user-emacs-directory))
+        (setq package-native-compile t)
+        )
+      )
+#+end_src
+
+#+RESULTS:
+: t
+
+** Package Management
 
 #+begin_src emacs-lisp
 ;; Initialize package sources
@@ -30,8 +48,8 @@
 #+RESULTS:
 | ~/.emacs.d/site-lisp/ | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/ | ~/.emacs.d/site-lisp/emacs-application-framework | ~/.emacs.d/lisp/ | /home/juanpablo/.emacs.d/elpa/ace-window-20200606.1259 | /home/juanpablo/.emacs.d/elpa/atomic-chrome-20210221.59 | /home/juanpablo/.emacs.d/elpa/auto-yasnippet-20191015.942 | /home/juanpablo/.emacs.d/elpa/avy-20201226.1734 | /home/juanpablo/.emacs.d/elpa/command-log-mode-20160413.447 | /home/juanpablo/.emacs.d/elpa/counsel-20210817.1505 | /home/juanpablo/.emacs.d/elpa/docker-tramp-20210729.508 | /home/juanpablo/.emacs.d/elpa/doom-modeline-20210807.922 | /home/juanpablo/.emacs.d/elpa/all-the-icons-20210728.2330 | /home/juanpablo/.emacs.d/elpa/doom-themes-20210731.818 | /home/juanpablo/.emacs.d/elpa/epresent-20160411.201 | /home/juanpablo/.emacs.d/elpa/general-20200516.50 | /home/juanpablo/.emacs.d/elpa/helm-c-yasnippet-20210330.16 | /home/juanpablo/.emacs.d/elpa/helm-20210816.1110 | /home/juanpablo/.emacs.d/elpa/helm-core-20210815.1700 | /home/juanpablo/.emacs.d/elpa/hide-lines-20210513.1636 | /home/juanpablo/.emacs.d/elpa/ivy-prescient-20210425.1720 | /home/juanpablo/.emacs.d/elpa/ivy-rich-20210409.931 | /home/juanpablo/.emacs.d/elpa/magit-20210818.813 | /home/juanpablo/.emacs.d/elpa/git-commit-20210806.1607 | /home/juanpablo/.emacs.d/elpa/magit-section-20210813.904 | /home/juanpablo/.emacs.d/elpa/no-littering-20210619.2158 | /home/juanpablo/.emacs.d/elpa/org-bullets-20200317.1740 | /home/juanpablo/.emacs.d/elpa/org-download-20210118.958 | /home/juanpablo/.emacs.d/elpa/async-20210501.1527 | /home/juanpablo/.emacs.d/elpa/org-tree-slide-20210224.1213 | /home/juanpablo/.emacs.d/elpa/ox-hugo-20210727.117 | /home/juanpablo/.emacs.d/elpa/popup-20210625.400 | /home/juanpablo/.emacs.d/elpa/prescient-20210724.1756 | /home/juanpablo/.emacs.d/elpa/projectile-20210811.435 | /home/juanpablo/.emacs.d/elpa/shrink-path-20190208.1335 | /home/juanpablo/.emacs.d/elpa/f-20210624.1103 | /home/juanpablo/.emacs.d/elpa/dash-20210708.2009 | /home/juanpablo/.emacs.d/elpa/s-20210616.619 | /home/juanpablo/.emacs.d/elpa/swiper-20210521.1319 | /home/juanpablo/.emacs.d/elpa/ivy-20210730.1743 | /home/juanpablo/.emacs.d/elpa/transient-20210816.1704 | /home/juanpablo/.emacs.d/elpa/use-package-20210207.1926 | /home/juanpablo/.emacs.d/elpa/bind-key-20210210.1609 | /home/juanpablo/.emacs.d/elpa/websocket-20210110.17 | /home/juanpablo/.emacs.d/elpa/with-editor-20210524.1654 | /home/juanpablo/.emacs.d/elpa/yasnippet-20200604.246 | /etc/emacs | /usr/local/share/emacs/27.1/site-lisp | /usr/local/share/emacs/site-lisp | /usr/share/emacs/site-lisp/dictionaries-common | /usr/share/emacs/27.1/site-lisp | /usr/share/emacs/site-lisp | /usr/share/emacs/27.1/lisp | /usr/share/emacs/27.1/lisp/vc | /usr/share/emacs/27.1/lisp/url | /usr/share/emacs/27.1/lisp/textmodes | /usr/share/emacs/27.1/lisp/progmodes | /usr/share/emacs/27.1/lisp/play | /usr/share/emacs/27.1/lisp/org | /usr/share/emacs/27.1/lisp/nxml | /usr/share/emacs/27.1/lisp/net | /usr/share/emacs/27.1/lisp/mh-e | /usr/share/emacs/27.1/lisp/mail | /usr/share/emacs/27.1/lisp/leim | /usr/share/emacs/27.1/lisp/language | /usr/share/emacs/27.1/lisp/international | /usr/share/emacs/27.1/lisp/image | /usr/share/emacs/27.1/lisp/gnus | /usr/share/emacs/27.1/lisp/eshell | /usr/share/emacs/27.1/lisp/erc | /usr/share/emacs/27.1/lisp/emulation | /usr/share/emacs/27.1/lisp/emacs-lisp | /usr/share/emacs/27.1/lisp/cedet | /usr/share/emacs/27.1/lisp/calendar | /usr/share/emacs/27.1/lisp/calc | /usr/share/emacs/27.1/lisp/obsolete | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/core | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/extension | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/img | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/airshare | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/browser | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/camera | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/demo | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-browser | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-manager | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-sender | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/image-viewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/jupyter | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/markdown-previewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/mermaid | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/mindmap | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/org-previewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/pdf-viewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/terminal | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/video-player | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/core/js | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/browser/aria2-ng | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-manager/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-manager/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src/store | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src/svg | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music/src/svg | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor/src/store | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo/src/assets | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo/src/components |
 
-* UI
-** Theme
+** UI
+*** Theme
 
 #+begin_src emacs-lisp
 (use-package doom-themes
@@ -44,7 +62,9 @@
   :custom ((doom-modeline-height 15)))
 #+end_src
 
-** Tweaks
+#+RESULTS:
+
+*** Tweaks
  #+begin_src emacs-lisp
  (setq inhibit-startup-message t)
 
@@ -76,7 +96,7 @@
    (add-hook mode (lambda () (display-line-numbers-mode 0))))
  #+end_src
 
-** Fonts
+*** Fonts
 
 #+begin_src emacs-lisp
 (set-face-attribute 'default nil :font "Iosevka" :height 140)
@@ -88,7 +108,35 @@
 (set-face-attribute 'variable-pitch nil :font "Iosevka Aile" :height 160 :weight 'regular)
 #+end_src
 
-** Disable Bell
+*** Dashboard
+#+begin_src emacs-lisp
+(use-package page-break-lines)
+
+(use-package dashboard 
+  :init      
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+  (setq dashboard-banner-logo-title "Emacs Is More Than A Text Editor!")
+  (setq dashboard-startup-banner `logo) 
+  (setq dashboard-center-content t)
+  (setq dashboard-set-navigator t)
+  (setq dashboard-page-separator  "\n\f\n")
+  (setq dashboard-items '((recents . 5)
+                          (agenda . 5 )
+                          (bookmarks . 5)
+                          (projects . 3)))
+  :config
+  (dashboard-modify-heading-icons '((recents . "file-text")
+                                    (bookmarks . "book"))))
+
+(defun my/initial-window-buffer-setup ()
+  (switch-to-buffer-other-window "*scratch*")
+  (switch-to-buffer-other-window "*dashboard*")
+)
+
+(add-hook 'after-init-hook #'my/initial-window-buffer-setup)
+#+end_src
+*** Disable Bell
 #+begin_src emacs-lisp
 ;;Avoid having noisy sounds when scrolling to the bottom of a buffer
 (defun my-bell-function ()
@@ -100,7 +148,25 @@
 (setq ring-bell-function 'my-bell-function)
 (setq ring-bell-function 'ignore)
 #+end_src
+
+** Tweaks
+*** Clean Folders
+
+#+begin_src emacs-lisp
+;; NOTE: If you want to move everything out of the ~/.emacs.d folder
+;; reliably, set `user-emacs-directory` before loading no-littering!
+;(setq user-emacs-directory "~/.cache/emacs")
+
+(use-package no-littering)
+
+;; no-littering doesn't set this by default so we must place
+;; auto save files in the same path as it uses for sessions
+(setq auto-save-file-name-transforms
+      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+#+end_src
+
 * Lisp
+** Macros
 
 #+begin_src emacs-lisp
 (defmacro my/general-define-key (args)
@@ -129,27 +195,225 @@ enjoy using a lot.
 
     `(s-format ,fmt 'aget (list ,@agetter))))
 #+end_src
-* Keybindings
+** Functions
 #+begin_src emacs-lisp
+(defun load-default-init-file ()
+  (interactive)
+  (load-file "~/.emacs")
+)
+#+end_src
+*** F-strings
+#+begin_src emacs-lisp
+
+#+end_src
+
+#+RESULTS:
+: f-string
+*** Remote Jupyter tools
+#+begin_src emacs-lisp
+(defun execute-command-remote (remote path command)
+  (setq full-command (f-string "cd /ssh:${remote}:${path};${command}"))
+  (eshell-command full-command)
+  )
+
+(defun open-toretto-jupyter ()
+  (interactive)
+  (setq toretto "juanpablo@192.168.200.222")
+  (setq jp-folder "/home/juanpablo/team-ds/jp/")
+  (setq launch-jupyter-docker "bash run_jupyter_jp.sh")
+  (setq jupyter-port "9018")
+  (execute-command-remote toretto jp-folder launch-jupyter-docker)
+  (eshell-command (f-string "ssh -N -f -L localhost:${jupyter-port}:localhost:${jupyter-port} ${toretto}"))
+  (ein:notebooklist-login "9018" nil)
+  (switch-to-buffer (f-string "*ein:notebooklist http://127.0.0.1:${jupyter-port}*"))
+  )
+
+(defun open-gpu-jupyter ()
+  (interactive)
+  (setq toretto "kwali@3.224.192.108")
+  (setq jp-folder "/home/kwali/pytorch_models/")
+  (setq launch-jupyter-docker "bash run_jupyter_jp.sh")
+  (setq jupyter-port "9018")
+  (execute-command-remote toretto jp-folder launch-jupyter-docker)
+  (eshell-command (f-string "ssh -N -f -L localhost:${jupyter-port}:localhost:${jupyter-port} ${toretto}"))
+  (ein:notebooklist-login "9018" nil)
+  (switch-to-buffer (f-string "*ein:notebooklist http://127.0.0.1:${jupyter-port}*"))
+  )
+#+end_src
+
+#+RESULTS:
+: open-gpu-jupyter
+
+* Keybindings & Aide-memoire
+** General
+#+begin_src emacs-lisp
+
+;; Emacs oriented keybinding. Do good, not evil!
+;; An interesting link for this is
+;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
 
 (use-package general
   :config
   (my/general-define-key
-   (("C-s" 'swiper
-     "C-x C-b" 'counsel-switch-buffer
+   (("C-x C-b" 'counsel-switch-buffer
+     "C-s" 'swiper
+     "C-M-s" 'avy-goto-char
+     "M-w" 'easy-kill
+     "C-@" 'er/expand-region
+     "C-x o" 'ace-window
+     "M-o"   'other-window
+     "C-M-o" 'hydra-window/body
      "C-c p" 'projectile-command-map
-     "M-o" 'ace-window   
-     "M-s" 'avy-goto-char
-     "C-M-y w" 'aya-create
-     "C-M-y y" 'aya-expand
-     "C-M-y s" 'aya-persist-snippet)
+     "C-c b" 'my/eaf-open-browser
+     "C-c B" 'hydra-browser/body
+     "C-c y w" 'aya-create
+     "C-c y y" 'aya-expand
+     "C-c y s" 'aya-persist-snippet
+     )
     (:keymaps 'minibuffer-local-map
 	      "C-r" 'counsel-minibuffer-history)
-    )))
+)))
 #+end_src
 
-* Ivy
-** Basics and Counsel
+#+RESULTS:
+: t
+
+** Hydras
+*** Window
+#+begin_src emacs-lisp
+(use-package hydra)
+(use-package pretty-hydra)
+(use-package windmove)
+(use-package transpose-frame)
+(use-package headlong)
+(winner-mode 1)
+
+;;shameleslly taken from abo-abo's init files
+(pretty-hydra-define hydra-window (:foreign-keys warn :quit-key "q")
+("Arrange"
+ (("v" (lambda ()
+         (interactive)
+         (split-window-right)
+         (windmove-right))
+       "vert")
+  ("x" (lambda ()
+         (interactive)
+         (split-window-below)
+         (windmove-down))
+       "horz")
+ ("d" ace-delete-window "del")
+ ("o" delete-other-windows "one" :exit t)
+ ("s" ace-swap-window "swap") 
+ ("t" transpose-frame "transpose" :exit t)
+ ("+" balance-windows "balance")
+ ("u" (progn (winner-undo) (setq this-command 'winner-undo)) "undo"))
+ "Move"
+ (("h" windmove-left nil)
+  ("j" windmove-down nil)
+  ("k" windmove-up nil)
+  ("l" windmove-right nil)
+  ("a" ace-window "ace")
+  ("i" ace-maximize-window "ace-one" :exit t)
+  ("b" ido-switch-buffer "buf")
+  ("m" headlong-bookmark-jump "bmk"))
+  )
+)
+#+end_src
+
+#+RESULTS:
+: hydra-window/body
+*** EAF
+#+begin_src emacs-lisp
+;; More of a mnemonic hydra than a cluster of keys to be chained like aya keybinds for example.
+(pretty-hydra-define hydra-browser (:foreign-keys warn :quit-key "q")
+("Go to"
+ (("o" eaf-py-proxy-insert_or_open_browser "open")
+  ("t" eaf-py-proxy-insert_or_new_blank_page "tab")
+  ("T" eaf-py-proxy-insert_or_recover_prev_close_page "recover"))
+ "Move"
+ (("j" eaf-py-proxy-insert_or_scroll_up nil)
+  ("k" eaf-py-proxy-insert_or_scroll_down nil)
+  ("h" eaf-py-proxy-insert_or_scroll_left nil)
+  ("l" eaf-py-proxy-insert_or_scroll_right nil)
+  ("H" eaf-py-proxy-insert_or_history_backward nil)
+  ("L" eaf-py-proxy-insert_or_history_forward nil)
+  ("J" eaf-py-proxy-insert_or_select_left_tab nil)
+  ("K" eaf-py-proxy-insert_or_select_right_tab nil)
+  ("O" eaf-py-proxy-insert_or_open_link_new_buffer_other_window nil)
+  ("i" eaf-py-proxy-insert_or_focus_input "input")
+  ("e" eaf-py-proxy-insert_or_edit_url "edit-url")
+  ("r" eaf-py-proxy-insert_or_refresh_ "refresh")
+  ("f" eaf-py-proxy-insert_or_open_link "link")
+  ("F" eaf-py-proxy-insert_or_open_link_new_buffer "link-newbuf"))
+ "Actions"
+ (("a" eaf-py-proxy-atomic_edit "atomic")
+  ("s" eaf-py-proxy-save_page_password "save-password")
+  ("p" eaf-py-proxy-toggle_password_autofill "insert-password")
+  ("," eaf-py-proxy-insert_or_switch_to_reader_mode "reader-mode")
+  (";" eaf-py-proxy-insert_or_translate_page "translate")
+  ("m" eaf-py-proxy-insert_or_toggle_device "tgl-device"))
+ "Open"
+ (("d" eaf-py-proxy-insert_or_open_downloads_setting "dwlds")
+  ("D"  eaf-py-proxy-open_devtools "dev-tools")
+  ("y"    eaf-py-proxy-insert_or_download_youtube_video "yt-dl"))
+ "Visuals"
+ (("0" eaf-py-proxy-insert_or_zoom_reset "reset")
+  ("-" eaf-py-proxy-zoom_out "out")
+  ("=" eaf-py-proxy-zoom_in "in")
+  ("3" eaf-py-proxy-insert_or_save_as_screenshot "scrshot"))
+  )
+)
+
+#+end_src
+
+#+RESULTS:
+: hydra-browser/body
+
+M-e atomic edit
+C-t toggle password autofill
+C-d save page password
+; translate page
+, reader mode
+
+Caret mode usual keys
+
+"c" eaf-py-proxy-insert_or_caret_at_line
+"v" eaf-py-proxy-caret_toggle_mark
+"w" eaf-py-proxy-caret_next_word
+"M-w" eaf-py-proxy-copy_text
+<escape>   eaf-py-proxy-caret_exit
+
+To be added
+
+()
+
+** Which-key
+#+begin_src emacs-lisp
+(use-package which-key
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :config
+  (setq which-key-idle-delay 1)
+)
+#+end_src
+
+#+RESULTS:
+: t
+
+** Yasnippets
+#+begin_src emacs-lisp
+(use-package yasnippet
+  :init
+  (setq yas-snippet-dirs
+	'("~/.emacs.d/snippets") ;; personal snippets
+	))
+
+(use-package auto-yasnippet)
+
+#+end_src
+* Discoverability
+** Ivy
+*** Basics and Counsel
 
  #+begin_src emacs-lisp
  (use-package ivy
@@ -173,7 +437,7 @@ enjoy using a lot.
  #+RESULTS:
  : t
 
-** Prescient
+*** Prescient
 
 #+begin_src emacs-lisp
 (use-package ivy-prescient
@@ -181,10 +445,47 @@ enjoy using a lot.
   :custom
   (ivy-prescient-enable-filtering nil)
   :config
-  ;; Uncomment the following line to have sorting remembered across sessions!
-  ;(prescient-persist-mode 1)
+  (setq ivy-prescient-sort-commands '(:not swiper swiper-isearch counsel-yank-pop counsel-find-file counsel-recentf counsel-descbinds))
   (ivy-prescient-mode 1))
 #+end_src
+
+#+RESULTS:
+: t
+** Projectile
+#+begin_src emacs-lisp
+(use-package projectile
+  :init
+  (setq projectile-project-search-path '("~/" "~/work"))
+  :config
+  (setq projectile-indexing-method 'native)
+  (setq projectile-completion-system 'ivy)
+  (setq projectile-enable-caching t)
+;;  (setq projectile-switch-project-action #'projectile-dired)
+  (projectile-mode +1)
+)
+#+end_src
+
+#+RESULTS:
+: t
+* Editing
+** Avy
+#+begin_src emacs-lisp
+(use-package avy)
+#+end_src
+
+** Ace Window
+#+begin_src emacs-lisp
+(use-package ace-window)
+#+end_src
+
+** Expand
+
+#+begin_src emacs-lisp
+(use-package expand-region)
+(use-package easy-kill)
+#+end_src
+
+#+RESULTS:
 
 * Tramp
 #+begin_src emacs-lisp
@@ -224,7 +525,6 @@ enjoy using a lot.
 
 #+RESULTS:
 : remote-shell
-
 * Org
 
 #+begin_src emacs-lisp
@@ -301,26 +601,12 @@ enjoy using a lot.
 #+end_src
 
 #+RESULTS:
-
-* Projectile
-#+begin_src emacs-lisp
-(use-package projectile
-  :config
-  (projectile-global-mode)
-  (setq projectile-completion-system 'ivy))
-#+end_src
-* Magit
+* Awesome Packages
+** Magit
 #+begin_src emacs-lisp
 (use-package magit)
 #+end_src
-* Shells
-#+begin_src emacs-lisp
-(use-package vterm)
-#+end_src
-
-#+RESULTS:
-
-* EAF
+** EAF
 
 #+begin_src emacs-lisp
 (use-package eaf
@@ -331,37 +617,76 @@ enjoy using a lot.
   (setq eaf-browser-enable-adblocker t)
   (require 'eaf-browser)
 )
+
+(defun my/eaf-open-browser (&optional args)
+  (interactive "P")
+  (progn
+    (split-window-right)
+    (other-window 1)
+  )
+  (if (equal current-prefix-arg '(4))
+    (call-interactively #'eaf-open-browser)
+    (eaf-open (eaf-wrap-url "www.google.com") "browser" args))
+)
+#+end_src
+
+#+RESULTS:
+: my/eaf-open-browser
+
+(equal current-prefix-arg nil)
+* IDE
+** Shells
+#+begin_src emacs-lisp
+(use-package term
+  :config
+  (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
+  ;;(setq explicit-zsh-args '())         ;; Use 'explicit-<shell>-args for shell-specific args
+
+  ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
+  (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
+
+(use-package eterm-256color
+  :hook (term-mode . eterm-256color-mode))
+#+end_src
+
+#+RESULTS:
+| eterm-256color-mode | (lambda nil (display-line-numbers-mode 0)) |
+* Writing
+** Mail
+#+begin_src emacs-lisp
+(add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu4e")
+
+(use-package mu4e
+  :ensure nil
+  :config
+  (setq mu4e-contexts
+      (list
+       ;; Work account
+       (make-mu4e-context
+        :name "Kwali"
+        :match-func
+          (lambda (msg)
+            (when msg
+              (string-prefix-p "/Gmail" (mu4e-message-field msg :maildir))))
+        :vars '((user-mail-address . "juanpablo@kwali.ai")
+                (user-full-name    . "Juan Pablo Morales")
+                (smtpmail-smtp-server  . "smtp.gmail.com")
+                (smtpmail-smtp-service . 465)
+                (smtpmail-stream-type  . ssl)
+                (mu4e-drafts-folder  . "/Gmail/[Gmail]/Drafts")
+                (mu4e-sent-folder  . "/Gmail/[Gmail]/Sent Mail")
+                (mu4e-refile-folder  . "/Gmail/[Gmail]/All Mail")
+                (mu4e-trash-folder  . "/Gmail/[Gmail]/Trash")))))
+
+  (setq message-send-mail-function 'smtpmail-send-it)
+)
+
+
 #+end_src
 
 #+RESULTS:
 : t
 
-* Movement
-** Avy
-#+begin_src emacs-lisp
-(use-package avy)
-#+end_src
-
-** Ace Window
-#+begin_src emacs-lisp
-(use-package ace-window)
-#+end_src
-* Aide-memoire
-** Yasnippets
-#+begin_src emacs-lisp
-(use-package yasnippet
-  :init
-  (setq yas-snippet-dirs
-	'("~/.emacs.d/snippets") ;; personal snippets
-	))
-
-(use-package auto-yasnippet)
-
-#+end_src
-** Hydra
-* IDE
-* Mail
-* Writing
 ** Atomic Emacs
 #+begin_src emacs-lisp
 (use-package atomic-chrome
@@ -408,22 +733,6 @@ enjoy using a lot.
 #+end_src
 
 #+RESULTS:
-
-* Tweaks
-** Clean Folders
-
-#+begin_src emacs-lisp
-;; NOTE: If you want to move everything out of the ~/.emacs.d folder
-;; reliably, set `user-emacs-directory` before loading no-littering!
-;(setq user-emacs-directory "~/.cache/emacs")
-
-(use-package no-littering)
-
-;; no-littering doesn't set this by default so we must place
-;; auto save files in the same path as it uses for sessions
-(setq auto-save-file-name-transforms
-      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
-#+end_src
 ** Ox-hugo
 #+BEGIN_SRC emacs-lisp :results silent
 (use-package ox-hugo
@@ -433,46 +742,3 @@ enjoy using a lot.
 
 #+RESULTS:
 : org-define-error
-* Lisp Helpers
-** F-strings
-#+begin_src emacs-lisp
-
-#+end_src
-
-#+RESULTS:
-: f-string
-** Remote Jupyter tools
-#+begin_src emacs-lisp
-(defun execute-command-remote (remote path command)
-  (setq full-command (f-string "cd /ssh:${remote}:${path};${command}"))
-  (eshell-command full-command)
-  )
-
-(defun open-toretto-jupyter ()
-  (interactive)
-  (setq toretto "juanpablo@192.168.200.222")
-  (setq jp-folder "/home/juanpablo/team-ds/jp/")
-  (setq launch-jupyter-docker "bash run_jupyter_jp.sh")
-  (setq jupyter-port "9018")
-  (execute-command-remote toretto jp-folder launch-jupyter-docker)
-  (eshell-command (f-string "ssh -N -f -L localhost:${jupyter-port}:localhost:${jupyter-port} ${toretto}"))
-  (ein:notebooklist-login "9018" nil)
-  (switch-to-buffer (f-string "*ein:notebooklist http://127.0.0.1:${jupyter-port}*"))
-  )
-
-(defun open-gpu-jupyter ()
-  (interactive)
-  (setq toretto "kwali@3.224.192.108")
-  (setq jp-folder "/home/kwali/pytorch_models/")
-  (setq launch-jupyter-docker "bash run_jupyter_jp.sh")
-  (setq jupyter-port "9018")
-  (execute-command-remote toretto jp-folder launch-jupyter-docker)
-  (eshell-command (f-string "ssh -N -f -L localhost:${jupyter-port}:localhost:${jupyter-port} ${toretto}"))
-  (ein:notebooklist-login "9018" nil)
-  (switch-to-buffer (f-string "*ein:notebooklist http://127.0.0.1:${jupyter-port}*"))
-  )
-#+end_src
-
-#+RESULTS:
-: open-gpu-jupyter
-
