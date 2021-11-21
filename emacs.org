@@ -245,34 +245,35 @@ enjoy using a lot.
 : open-gpu-jupyter
 
 * Keybindings & Aide-memoire
-** General
+** General.el
 #+begin_src emacs-lisp
 
-;; Emacs oriented keybinding. Do good, not evil!
-;; An interesting link for this is
-;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
+  ;; Emacs oriented keybinding. Do good, not evil!
+  ;; An interesting link for this is
+  ;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
 
-(use-package general
-  :config
-  (my/general-define-key
-   (("C-x C-b" 'counsel-switch-buffer
-     "C-s" 'swiper
-     "C-M-s" 'avy-goto-char
-     "M-w" 'easy-kill
-     "C-@" 'er/expand-region
-     "C-x o" 'ace-window
-     "M-o"   'other-window
-     "C-M-o" 'hydra-window/body
-     "C-c p" 'projectile-command-map
-     "C-c b" 'my/eaf-open-browser
-     "C-c B" 'hydra-browser/body
-     "C-c y w" 'aya-create
-     "C-c y y" 'aya-expand
-     "C-c y s" 'aya-persist-snippet
-     )
-    (:keymaps 'minibuffer-local-map
-	      "C-r" 'counsel-minibuffer-history)
-)))
+  (use-package general
+    :config
+    (my/general-define-key
+     (("C-x C-b" 'counsel-switch-buffer
+       "C-s" 'swiper
+       "C-M-s" 'avy-goto-char
+       "M-w" 'easy-kill
+       "C-@" 'er/expand-region
+       "C-x o" 'ace-window
+       "M-o"   'other-window
+       "C-M-o" 'hydra-window/body
+       "C-c p" 'projectile-command-map
+       "C-c b" 'my/eaf-open-browser
+       "C-c h b" 'hydra-browser/body
+       "C-c t" 'vterm-toggle
+       "C-c y w" 'aya-create
+       "C-c y y" 'aya-expand
+       "C-c y s" 'aya-persist-snippet
+       )
+      (:keymaps 'minibuffer-local-map
+                "C-r" 'counsel-minibuffer-history)
+  )))
 #+end_src
 
 #+RESULTS:
@@ -467,26 +468,73 @@ To be added
 
 #+RESULTS:
 : t
-* Editing
-** Avy
+* IDE
+** Shells
 #+begin_src emacs-lisp
-(use-package avy)
-#+end_src
+(use-package term
+  :config
+  (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
+  ;;(setq explicit-zsh-args '())         ;; Use 'explicit-<shell>-args for shell-specific args
 
-** Ace Window
-#+begin_src emacs-lisp
-(use-package ace-window)
-#+end_src
+  ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
+  (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
 
-** Expand
-
-#+begin_src emacs-lisp
-(use-package expand-region)
-(use-package easy-kill)
+(use-package eterm-256color
+  :hook (term-mode . eterm-256color-mode))
 #+end_src
 
 #+RESULTS:
+| eterm-256color-mode | (lambda nil (display-line-numbers-mode 0)) |
 
+#+begin_src emacs-lisp
+(use-package vterm
+  :config
+  (defun turn-off-chrome ()
+    (hl-line-mode -1)
+    (display-line-numbers-mode -1))
+  :hook (vterm-mode . turn-off-chrome))
+
+(use-package vterm-toggle
+  :custom
+  (vterm-toggle-fullscreen-p nil "Open a vterm in another window.")
+  (vterm-toggle-scope 'projectile)
+  :bind (("C-c t" . #'vterm-toggle)
+         :map vterm-mode-map
+         ("s-t" . #'vterm) ; Open up new tabs quickly
+         ))
+#+end_src
+
+#+RESULTS:
+: vterm
+
+** LSP
+
+#+begin_src emacs-lisp
+  (defun my/lsp-mode-setup ()
+    (lsp-headerline-breadcrumb-mode))
+
+  (use-package lsp-mode
+    :commands (lsp lsp-deferred)
+    :hook ((c++-mode . lsp)
+           (lsp-mode . my/lsp-mode-setup))
+    :init
+    (setq lsp-keymap-prefix "C-c l")  ;; Or 'C-l', 's-l'
+    :config
+    (lsp-enable-which-key-integration t))
+
+
+  (use-package lsp-ui
+    :hook (lsp-mode . lsp-ui-mode)
+    :custom
+    (lsp-ui-doc-position 'bottom))
+
+  (use-package lsp-treemacs
+    :after lsp)
+  (use-package lsp-ivy
+    :after lsp)
+#+end_src
+
+#+RESULTS:
 * Tramp
 #+begin_src emacs-lisp
 (use-package docker-tramp)
@@ -601,6 +649,26 @@ To be added
 #+end_src
 
 #+RESULTS:
+* Editing
+** Avy
+#+begin_src emacs-lisp
+(use-package avy)
+#+end_src
+
+** Ace Window
+#+begin_src emacs-lisp
+(use-package ace-window)
+#+end_src
+
+** Expand
+
+#+begin_src emacs-lisp
+(use-package expand-region)
+(use-package easy-kill)
+#+end_src
+
+#+RESULTS:
+
 * Awesome Packages
 ** Magit
 #+begin_src emacs-lisp
@@ -620,10 +688,6 @@ To be added
 
 (defun my/eaf-open-browser (&optional args)
   (interactive "P")
-  (progn
-    (split-window-right)
-    (other-window 1)
-  )
   (if (equal current-prefix-arg '(4))
     (call-interactively #'eaf-open-browser)
     (eaf-open (eaf-wrap-url "www.google.com") "browser" args))
@@ -634,23 +698,6 @@ To be added
 : my/eaf-open-browser
 
 (equal current-prefix-arg nil)
-* IDE
-** Shells
-#+begin_src emacs-lisp
-(use-package term
-  :config
-  (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
-  ;;(setq explicit-zsh-args '())         ;; Use 'explicit-<shell>-args for shell-specific args
-
-  ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
-  (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
-
-(use-package eterm-256color
-  :hook (term-mode . eterm-256color-mode))
-#+end_src
-
-#+RESULTS:
-| eterm-256color-mode | (lambda nil (display-line-numbers-mode 0)) |
 * Writing
 ** Mail
 #+begin_src emacs-lisp
