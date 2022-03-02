@@ -1,0 +1,796 @@
+#+PROPERTY: header-args:emacs-lisp :tangle /home/juanpa/.emacs
+
+* Base Config
+** Startup
+** Native Comp
+#+begin_src emacs-lisp
+    (when (and (fboundp 'native-comp-available-p)
+             (native-comp-available-p))
+
+      (progn
+        (setq native-comp-async-report-warnings-errors nil)
+        (setq comp-deferred-compilation t)
+        (add-to-list 'native-comp-eln-load-path (expand-file-name "eln-cache/" user-emacs-directory))
+        (setq package-native-compile t)
+        )
+      )
+#+end_src
+
+#+RESULTS:
+: t
+
+** Package Management
+
+#+begin_src emacs-lisp
+;; Initialize package sources
+(require 'package)
+
+(setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                         ("org" . "https://orgmode.org/elpa/")
+                         ("elpa" . "https://elpa.gnu.org/packages/")))
+
+(package-initialize)
+(unless package-archive-contents
+  (package-refresh-contents))
+
+  ;; Initialize use-package on non-Linux platforms
+(unless (package-installed-p 'use-package)
+  (package-install 'use-package))
+
+(require 'use-package)
+(setq use-package-always-ensure t)
+
+(add-to-list 'load-path "~/.emacs.d/site-lisp/")
+
+
+#+end_src
+
+#+RESULTS:
+| ~/.emacs.d/site-lisp/ | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/ | ~/.emacs.d/site-lisp/emacs-application-framework | ~/.emacs.d/lisp/ | /home/juanpablo/.emacs.d/elpa/ace-window-20200606.1259 | /home/juanpablo/.emacs.d/elpa/atomic-chrome-20210221.59 | /home/juanpablo/.emacs.d/elpa/auto-yasnippet-20191015.942 | /home/juanpablo/.emacs.d/elpa/avy-20201226.1734 | /home/juanpablo/.emacs.d/elpa/command-log-mode-20160413.447 | /home/juanpablo/.emacs.d/elpa/counsel-20210817.1505 | /home/juanpablo/.emacs.d/elpa/docker-tramp-20210729.508 | /home/juanpablo/.emacs.d/elpa/doom-modeline-20210807.922 | /home/juanpablo/.emacs.d/elpa/all-the-icons-20210728.2330 | /home/juanpablo/.emacs.d/elpa/doom-themes-20210731.818 | /home/juanpablo/.emacs.d/elpa/epresent-20160411.201 | /home/juanpablo/.emacs.d/elpa/general-20200516.50 | /home/juanpablo/.emacs.d/elpa/helm-c-yasnippet-20210330.16 | /home/juanpablo/.emacs.d/elpa/helm-20210816.1110 | /home/juanpablo/.emacs.d/elpa/helm-core-20210815.1700 | /home/juanpablo/.emacs.d/elpa/hide-lines-20210513.1636 | /home/juanpablo/.emacs.d/elpa/ivy-prescient-20210425.1720 | /home/juanpablo/.emacs.d/elpa/ivy-rich-20210409.931 | /home/juanpablo/.emacs.d/elpa/magit-20210818.813 | /home/juanpablo/.emacs.d/elpa/git-commit-20210806.1607 | /home/juanpablo/.emacs.d/elpa/magit-section-20210813.904 | /home/juanpablo/.emacs.d/elpa/no-littering-20210619.2158 | /home/juanpablo/.emacs.d/elpa/org-bullets-20200317.1740 | /home/juanpablo/.emacs.d/elpa/org-download-20210118.958 | /home/juanpablo/.emacs.d/elpa/async-20210501.1527 | /home/juanpablo/.emacs.d/elpa/org-tree-slide-20210224.1213 | /home/juanpablo/.emacs.d/elpa/ox-hugo-20210727.117 | /home/juanpablo/.emacs.d/elpa/popup-20210625.400 | /home/juanpablo/.emacs.d/elpa/prescient-20210724.1756 | /home/juanpablo/.emacs.d/elpa/projectile-20210811.435 | /home/juanpablo/.emacs.d/elpa/shrink-path-20190208.1335 | /home/juanpablo/.emacs.d/elpa/f-20210624.1103 | /home/juanpablo/.emacs.d/elpa/dash-20210708.2009 | /home/juanpablo/.emacs.d/elpa/s-20210616.619 | /home/juanpablo/.emacs.d/elpa/swiper-20210521.1319 | /home/juanpablo/.emacs.d/elpa/ivy-20210730.1743 | /home/juanpablo/.emacs.d/elpa/transient-20210816.1704 | /home/juanpablo/.emacs.d/elpa/use-package-20210207.1926 | /home/juanpablo/.emacs.d/elpa/bind-key-20210210.1609 | /home/juanpablo/.emacs.d/elpa/websocket-20210110.17 | /home/juanpablo/.emacs.d/elpa/with-editor-20210524.1654 | /home/juanpablo/.emacs.d/elpa/yasnippet-20200604.246 | /etc/emacs | /usr/local/share/emacs/27.1/site-lisp | /usr/local/share/emacs/site-lisp | /usr/share/emacs/site-lisp/dictionaries-common | /usr/share/emacs/27.1/site-lisp | /usr/share/emacs/site-lisp | /usr/share/emacs/27.1/lisp | /usr/share/emacs/27.1/lisp/vc | /usr/share/emacs/27.1/lisp/url | /usr/share/emacs/27.1/lisp/textmodes | /usr/share/emacs/27.1/lisp/progmodes | /usr/share/emacs/27.1/lisp/play | /usr/share/emacs/27.1/lisp/org | /usr/share/emacs/27.1/lisp/nxml | /usr/share/emacs/27.1/lisp/net | /usr/share/emacs/27.1/lisp/mh-e | /usr/share/emacs/27.1/lisp/mail | /usr/share/emacs/27.1/lisp/leim | /usr/share/emacs/27.1/lisp/language | /usr/share/emacs/27.1/lisp/international | /usr/share/emacs/27.1/lisp/image | /usr/share/emacs/27.1/lisp/gnus | /usr/share/emacs/27.1/lisp/eshell | /usr/share/emacs/27.1/lisp/erc | /usr/share/emacs/27.1/lisp/emulation | /usr/share/emacs/27.1/lisp/emacs-lisp | /usr/share/emacs/27.1/lisp/cedet | /usr/share/emacs/27.1/lisp/calendar | /usr/share/emacs/27.1/lisp/calc | /usr/share/emacs/27.1/lisp/obsolete | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/core | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/extension | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/img | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/airshare | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/browser | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/camera | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/demo | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-browser | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-manager | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-sender | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/image-viewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/jupyter | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/markdown-previewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/mermaid | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/mindmap | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/org-previewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/pdf-viewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/terminal | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/video-player | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/core/js | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/browser/aria2-ng | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-manager/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-manager/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src/store | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src/svg | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music/src/svg | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor/src/store | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo/src/assets | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo/src/components |
+
+** UI
+*** Theme
+
+#+begin_src emacs-lisp
+(use-package doom-themes
+  :init (load-theme 'doom-palenight t))
+
+(use-package all-the-icons)
+
+(use-package doom-modeline
+  :init (doom-modeline-mode 1)
+  :custom ((doom-modeline-height 15)))
+#+end_src
+
+#+RESULTS:
+
+*** Tweaks
+ #+begin_src emacs-lisp
+ (setq inhibit-startup-message t)
+
+ (scroll-bar-mode -1)        ; Disable visible scrollbar
+ (tool-bar-mode -1)          ; Disable the toolbar
+ (tooltip-mode -1)           ; Disable tooltips
+ (set-fringe-mode 10)        ; Give some breathing room
+
+ (menu-bar-mode -1)            ; Disable the menu bar
+
+ ;; Set up the visible bell
+ (setq visible-bell t)
+
+ (column-number-mode)
+ (global-display-line-numbers-mode t)
+
+ ;; Set frame transparency
+ (set-frame-parameter (selected-frame) 'alpha 95)
+ (add-to-list 'default-frame-alist `(alpha . ,95))
+ ;;(set-frame-parameter (selected-frame) 'fullscreen 'maximized)
+ ;;(add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+ ;; Disable line numbers for some modes
+ (dolist (mode '(org-mode-hook
+                 term-mode-hook
+                 shell-mode-hook
+                 treemacs-mode-hook
+                 eshell-mode-hook))
+   (add-hook mode (lambda () (display-line-numbers-mode 0))))
+ #+end_src
+
+*** Fonts
+
+#+begin_src emacs-lisp
+(set-face-attribute 'default nil :font "Iosevka" :height 140)
+
+;; Set the fixed pitch face
+(set-face-attribute 'fixed-pitch nil :font "Iosevka" :height 140)
+
+;; Set the variable pitch face
+(set-face-attribute 'variable-pitch nil :font "Iosevka Aile" :height 160 :weight 'regular)
+#+end_src
+
+*** Dashboard
+#+begin_src emacs-lisp
+(use-package page-break-lines)
+
+(use-package dashboard 
+  :init      
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+  (setq dashboard-banner-logo-title "Emacs Is More Than A Text Editor!")
+  (setq dashboard-startup-banner `logo) 
+  (setq dashboard-center-content t)
+  (setq dashboard-set-navigator t)
+  (setq dashboard-page-separator  "\n\f\n")
+  (setq dashboard-items '((recents . 5)
+                          (agenda . 5 )
+                          (bookmarks . 5)
+                          (projects . 3)))
+  :config
+  (dashboard-modify-heading-icons '((recents . "file-text")
+                                    (bookmarks . "book"))))
+
+(defun my/initial-window-buffer-setup ()
+  (switch-to-buffer-other-window "*scratch*")
+  (switch-to-buffer-other-window "*dashboard*")
+)
+
+(add-hook 'after-init-hook #'my/initial-window-buffer-setup)
+#+end_src
+*** Disable Bell
+#+begin_src emacs-lisp
+;;Avoid having noisy sounds when scrolling to the bottom of a buffer
+(defun my-bell-function ()
+  (unless (memq this-command
+		'(isearch-abort abort-recursive-edit exit-minibuffer
+				keyboard-quit mwheel-scroll down up next-line previous-line
+				backward-char forward-char))
+    (ding)))
+(setq ring-bell-function 'my-bell-function)
+(setq ring-bell-function 'ignore)
+#+end_src
+
+** Tweaks
+*** Clean Folders
+
+#+begin_src emacs-lisp
+;; NOTE: If you want to move everything out of the ~/.emacs.d folder
+;; reliably, set `user-emacs-directory` before loading no-littering!
+;(setq user-emacs-directory "~/.cache/emacs")
+
+(use-package no-littering)
+
+;; no-littering doesn't set this by default so we must place
+;; auto save files in the same path as it uses for sessions
+(setq auto-save-file-name-transforms
+      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+#+end_src
+
+* Lisp
+** Macros
+
+#+begin_src emacs-lisp
+(defmacro my/general-define-key (args)
+  `(progn ,@(mapcar (lambda (arglist)
+		      `(general-def ,@arglist :package 'general))
+		    args)))
+
+(defmacro f-string (fmt)
+  "Like `s-format' but with format fields in it.
+FMT is a string to be expanded against the current lexical
+environment. It is like what is used in `s-lex-format', but has
+an expanded syntax to allow format-strings. For example:
+${user-full-name 20s} will be expanded to the current value of
+the variable `user-full-name' in a field 20 characters wide.
+  (let ((f (sqrt 5)))  (f-string \"${f 1.2f}\"))
+  will render as: 2.24
+This function is inspired by the f-strings in Python 3.6, which I
+enjoy using a lot.
+"
+  (let* ((matches (s-match-strings-all"${\\(?3:\\(?1:[^} ]+\\) *\\(?2:[^}]*\\)\\)}" fmt))
+         (agetter (cl-loop for (m0 m1 m2 m3) in matches
+                        collect `(cons ,m3  (format (format "%%%s" (if (string= ,m2 "")
+                                                                      (if s-lex-value-as-lisp "S" "s")
+                                                                   ,m2))
+                                                  (symbol-value (intern ,m1)))))))
+
+    `(s-format ,fmt 'aget (list ,@agetter))))
+#+end_src
+** Functions
+#+begin_src emacs-lisp
+(defun load-default-init-file ()
+  (interactive)
+  (load-file "~/.emacs")
+)
+#+end_src
+*** F-strings
+#+begin_src emacs-lisp
+
+#+end_src
+
+#+RESULTS:
+: f-string
+*** Remote Jupyter tools
+#+begin_src emacs-lisp
+(defun execute-command-remote (remote path command)
+  (setq full-command (f-string "cd /ssh:${remote}:${path};${command}"))
+  (eshell-command full-command)
+  )
+
+(defun open-toretto-jupyter ()
+  (interactive)
+  (setq toretto "juanpablo@192.168.200.222")
+  (setq jp-folder "/home/juanpablo/team-ds/jp/")
+  (setq launch-jupyter-docker "bash run_jupyter_jp.sh")
+  (setq jupyter-port "9018")
+  (execute-command-remote toretto jp-folder launch-jupyter-docker)
+  (eshell-command (f-string "ssh -N -f -L localhost:${jupyter-port}:localhost:${jupyter-port} ${toretto}"))
+  (ein:notebooklist-login "9018" nil)
+  (switch-to-buffer (f-string "*ein:notebooklist http://127.0.0.1:${jupyter-port}*"))
+  )
+
+(defun open-gpu-jupyter ()
+  (interactive)
+  (setq toretto "kwali@3.224.192.108")
+  (setq jp-folder "/home/kwali/pytorch_models/")
+  (setq launch-jupyter-docker "bash run_jupyter_jp.sh")
+  (setq jupyter-port "9018")
+  (execute-command-remote toretto jp-folder launch-jupyter-docker)
+  (eshell-command (f-string "ssh -N -f -L localhost:${jupyter-port}:localhost:${jupyter-port} ${toretto}"))
+  (ein:notebooklist-login "9018" nil)
+  (switch-to-buffer (f-string "*ein:notebooklist http://127.0.0.1:${jupyter-port}*"))
+  )
+#+end_src
+
+#+RESULTS:
+: open-gpu-jupyter
+
+* Keybindings & Aide-memoire
+** General
+#+begin_src emacs-lisp
+
+;; Emacs oriented keybinding. Do good, not evil!
+;; An interesting link for this is
+;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
+
+(use-package general
+  :config
+  (my/general-define-key
+   (("C-x C-b" 'counsel-switch-buffer
+     "C-s" 'swiper
+     "C-M-s" 'avy-goto-char
+     "M-w" 'easy-kill
+     "C-@" 'er/expand-region
+     "C-x o" 'ace-window
+     "M-o"   'other-window
+     "C-M-o" 'hydra-window/body
+     "C-c p" 'projectile-command-map
+     "C-c b" 'my/eaf-open-browser
+     "C-c B" 'hydra-browser/body
+     "C-c y w" 'aya-create
+     "C-c y y" 'aya-expand
+     "C-c y s" 'aya-persist-snippet
+     )
+    (:keymaps 'minibuffer-local-map
+	      "C-r" 'counsel-minibuffer-history)
+)))
+#+end_src
+
+#+RESULTS:
+: t
+
+** Hydras
+*** Window
+#+begin_src emacs-lisp
+(use-package hydra)
+(use-package pretty-hydra)
+(use-package windmove)
+(use-package transpose-frame)
+(use-package headlong)
+(winner-mode 1)
+
+;;shameleslly taken from abo-abo's init files
+(pretty-hydra-define hydra-window (:foreign-keys warn :quit-key "q")
+("Arrange"
+ (("v" (lambda ()
+         (interactive)
+         (split-window-right)
+         (windmove-right))
+       "vert")
+  ("x" (lambda ()
+         (interactive)
+         (split-window-below)
+         (windmove-down))
+       "horz")
+ ("d" ace-delete-window "del")
+ ("o" delete-other-windows "one" :exit t)
+ ("s" ace-swap-window "swap") 
+ ("t" transpose-frame "transpose" :exit t)
+ ("+" balance-windows "balance")
+ ("u" (progn (winner-undo) (setq this-command 'winner-undo)) "undo"))
+ "Move"
+ (("h" windmove-left nil)
+  ("j" windmove-down nil)
+  ("k" windmove-up nil)
+  ("l" windmove-right nil)
+  ("a" ace-window "ace")
+  ("i" ace-maximize-window "ace-one" :exit t)
+  ("b" ido-switch-buffer "buf")
+  ("m" headlong-bookmark-jump "bmk"))
+  )
+)
+#+end_src
+
+#+RESULTS:
+: hydra-window/body
+*** EAF
+#+begin_src emacs-lisp :tangle no
+;; More of a mnemonic hydra than a cluster of keys to be chained like aya keybinds for example.
+(pretty-hydra-define hydra-browser (:foreign-keys warn :quit-key "q")
+("Go to"
+ (("o" eaf-py-proxy-insert_or_open_browser "open")
+  ("t" eaf-py-proxy-insert_or_new_blank_page "tab")
+  ("T" eaf-py-proxy-insert_or_recover_prev_close_page "recover"))
+ "Move"
+ (("j" eaf-py-proxy-insert_or_scroll_up nil)
+  ("k" eaf-py-proxy-insert_or_scroll_down nil)
+  ("h" eaf-py-proxy-insert_or_scroll_left nil)
+  ("l" eaf-py-proxy-insert_or_scroll_right nil)
+  ("H" eaf-py-proxy-insert_or_history_backward nil)
+  ("L" eaf-py-proxy-insert_or_history_forward nil)
+  ("J" eaf-py-proxy-insert_or_select_left_tab nil)
+  ("K" eaf-py-proxy-insert_or_select_right_tab nil)
+  ("O" eaf-py-proxy-insert_or_open_link_new_buffer_other_window nil)
+  ("i" eaf-py-proxy-insert_or_focus_input "input")
+  ("e" eaf-py-proxy-insert_or_edit_url "edit-url")
+  ("r" eaf-py-proxy-insert_or_refresh_ "refresh")
+  ("f" eaf-py-proxy-insert_or_open_link "link")
+  ("F" eaf-py-proxy-insert_or_open_link_new_buffer "link-newbuf"))
+ "Actions"
+ (("a" eaf-py-proxy-atomic_edit "atomic")
+  ("s" eaf-py-proxy-save_page_password "save-password")
+  ("p" eaf-py-proxy-toggle_password_autofill "insert-password")
+  ("," eaf-py-proxy-insert_or_switch_to_reader_mode "reader-mode")
+  (";" eaf-py-proxy-insert_or_translate_page "translate")
+  ("m" eaf-py-proxy-insert_or_toggle_device "tgl-device"))
+ "Open"
+ (("d" eaf-py-proxy-insert_or_open_downloads_setting "dwlds")
+  ("D"  eaf-py-proxy-open_devtools "dev-tools")
+  ("y"    eaf-py-proxy-insert_or_download_youtube_video "yt-dl"))
+ "Visuals"
+ (("0" eaf-py-proxy-insert_or_zoom_reset "reset")
+  ("-" eaf-py-proxy-zoom_out "out")
+  ("=" eaf-py-proxy-zoom_in "in")
+  ("3" eaf-py-proxy-insert_or_save_as_screenshot "scrshot"))
+  )
+)
+
+#+end_src
+
+#+RESULTS:
+: hydra-browser/body
+
+M-e atomic edit
+C-t toggle password autofill
+C-d save page password
+; translate page
+, reader mode
+
+Caret mode usual keys
+
+"c" eaf-py-proxy-insert_or_caret_at_line
+"v" eaf-py-proxy-caret_toggle_mark
+"w" eaf-py-proxy-caret_next_word
+"M-w" eaf-py-proxy-copy_text
+<escape>   eaf-py-proxy-caret_exit
+
+To be added
+
+()
+
+** Which-key
+#+begin_src emacs-lisp
+(use-package which-key
+  :init (which-key-mode)
+  :diminish which-key-mode
+  :config
+  (setq which-key-idle-delay 1)
+)
+#+end_src
+
+#+RESULTS:
+: t
+
+** Yasnippets
+#+begin_src emacs-lisp
+(use-package yasnippet
+  :init
+  (setq yas-snippet-dirs
+	'("~/.emacs.d/snippets") ;; personal snippets
+	))
+
+(use-package auto-yasnippet)
+
+#+end_src
+* Discoverability
+** Ivy
+*** Basics and Counsel
+
+ #+begin_src emacs-lisp
+ (use-package ivy
+   :diminish
+   :config
+   (ivy-mode 1))
+
+ (use-package counsel
+   :custom
+   (counsel-linux-app-format-function #'counsel-linux-app-format-function-name-only)
+   :config
+   (counsel-mode 1))
+
+ (use-package ivy-rich
+   :after ivy
+   :init
+   (ivy-rich-mode 1)
+   (setq ivy-rich-parse-remote-buffer nil))
+
+
+ #+end_src
+
+ #+RESULTS:
+ : t
+
+*** Prescient
+
+#+begin_src emacs-lisp
+(use-package ivy-prescient
+  :after counsel
+  :custom
+  (ivy-prescient-enable-filtering nil)
+  :config
+  (setq ivy-prescient-sort-commands '(:not swiper swiper-isearch counsel-yank-pop counsel-find-file counsel-recentf counsel-descbinds))
+  (ivy-prescient-mode 1))
+#+end_src
+
+#+RESULTS:
+: t
+** Projectile
+#+begin_src emacs-lisp
+(use-package projectile
+  :init
+  (setq projectile-project-search-path '("~/" "~/work"))
+  :config
+  (setq projectile-indexing-method 'native)
+  (setq projectile-completion-system 'ivy)
+  (setq projectile-enable-caching t)
+;;  (setq projectile-switch-project-action #'projectile-dired)
+  (projectile-mode +1)
+)
+#+end_src
+
+#+RESULTS:
+: t
+* Editing
+** Avy
+#+begin_src emacs-lisp
+(use-package avy)
+#+end_src
+
+** Ace Window
+#+begin_src emacs-lisp
+(use-package ace-window)
+#+end_src
+
+** Expand
+
+#+begin_src emacs-lisp
+(use-package expand-region)
+(use-package easy-kill)
+#+end_src
+
+#+RESULTS:
+
+* Tramp
+#+begin_src emacs-lisp
+(use-package docker-tramp)
+
+(defun remote-shell--dummy1 (path)
+    (interactive "sPath:")
+    (let ((default-directory path) (current-prefix-arg '(4)))
+      (call-interactively 'shell)))
+
+(defun remote-shell--dummy2 (path)
+    (interactive (list (read-directory-name "Default directory: " nil nil t default-directory)))
+    (let ((default-directory path) (current-prefix-arg '(4)))
+      (call-interactively 'shell)))
+
+(load-file (concat (car (directory-files "/home/juanpa/.emacs.d/elpa/" t "counsel*" nil)) "/counsel.el"))
+(defun open-shell-new-buffer (path)
+  (let ((default-directory path) (current-prefix-arg '(4)))
+    (call-interactively 'shell)
+    )
+  )
+(defun remote-shell ()
+  (interactive)
+  (ivy-read "Open shell in path:" #'read-file-name-internal
+            :matcher #'counsel--find-file-matcher
+            :initial-input nil
+            :action #'open-shell-new-buffer
+            :preselect (counsel--preselect-file)
+            :require-match 'confirm-after-completion
+            :history 'file-name-history
+            :keymap counsel-find-file-map
+            :caller #'remote-shell)
+  )
+
+
+#+end_src
+
+#+RESULTS:
+: remote-shell
+* Org
+
+#+begin_src emacs-lisp
+(defun efs/org-font-setup ()
+  ;; Replace list hyphen with dot
+  (font-lock-add-keywords 'org-mode
+                          '(("^ *\\([-]\\) "
+                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+
+  ;; Set faces for heading levels
+  (dolist (face '((org-level-1 . 1.2)
+                  (org-level-2 . 1.1)
+                  (org-level-3 . 1.05)
+                  (org-level-4 . 1.0)
+                  (org-level-5 . 1.1)
+                  (org-level-6 . 1.1)
+                  (org-level-7 . 1.1)
+                  (org-level-8 . 1.1)))
+    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+
+  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+  (set-face-attribute 'org-block nil    :foreground nil :inherit 'fixed-pitch)
+  (set-face-attribute 'org-table nil    :inherit 'fixed-pitch)
+  (set-face-attribute 'org-formula nil  :inherit 'fixed-pitch)
+  (set-face-attribute 'org-code nil     :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-table nil    :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+  (set-face-attribute 'org-checkbox nil  :inherit 'fixed-pitch)
+  (set-face-attribute 'line-number nil :inherit 'fixed-pitch)
+  (set-face-attribute 'line-number-current-line nil :inherit 'fixed-pitch))
+
+(defun efs/org-mode-setup ()
+  (org-indent-mode)
+  (variable-pitch-mode 1)
+  (visual-line-mode 1))
+
+(use-package org
+  :pin org
+  :commands (org-capture org-agenda)
+  :hook (org-mode . efs/org-mode-setup)
+  :config
+  (setq org-ellipsis " ▾")
+  (efs/org-font-setup)
+  (org-babel-do-load-languages
+    'org-babel-load-languages
+    '((emacs-lisp . t)
+      (python . t)
+      (shell . t)))
+  (setq org-confirm-babel-evaluate nil)
+  (setq org-capture-templates nil)
+)
+
+
+
+#+end_src
+
+#+RESULTS:
+
+
+#+begin_src emacs-lisp
+(use-package org-bullets
+  :hook (org-mode . org-bullets-mode)
+  :custom
+  (org-bullets-bullet-list '("◉" "○" "●" "○" "●" "○" "●")))
+#+end_src
+
+#+begin_src emacs-lisp
+(use-package org-download
+  :init
+  (with-eval-after-load 'org
+    (org-download-enable))
+)
+#+end_src
+
+#+RESULTS:
+* Awesome Packages
+** Magit
+#+begin_src emacs-lisp
+(use-package magit)
+#+end_src
+** EAF
+#+begin_src emacs-lisp :tangle no
+(use-package eaf
+  :load-path "~/.emacs.d/site-lisp/emacs-application-framework" ; Set to "/usr/share/emacs/site-lisp/eaf" if installed from AUR
+  :custom
+  (eaf-browser-continue-where-left-off t)
+  :config
+  (setq eaf-browser-enable-adblocker t)
+  (require 'eaf-browser)
+)
+
+(defun my/eaf-open-browser (&optional args)
+  (interactive "P")
+  (progn
+    (split-window-right)
+    (other-window 1)
+  )
+  (if (equal current-prefix-arg '(4))
+    (call-interactively #'eaf-open-browser)
+    (eaf-open (eaf-wrap-url "www.google.com") "browser" args))
+)
+#+end_src
+
+
+(equal current-prefix-arg nil)
+** Nyxt
+
+#+begin_src emacs-lisp
+    (use-package emacs-with-nyxt
+      :ensure nil
+      :load-path "~/.emacs.d/site-lisp/emacs-with-nyxt"
+      )
+
+  (use-package slime
+      :config
+      (setq slime-lisp-implementations 
+        '(
+          ;; (clisp ("/usr/bin/clisp"))
+          (sbcl ("/usr/bin/sbcl"))
+        )
+      )
+    )
+
+    ;; (use-package sly
+    ;;   :config
+    ;;   (setq sly-lisp-implementations 
+    ;;     '((clisp ("/usr/bin/clisp"))
+    ;;       ;; (sbcl ("/usr/bin/sbcl"))
+    ;;     )
+    ;;   )
+    ;; )
+#+end_src
+
+#+RESULTS:
+: t
+
+* IDE
+** Shells
+#+begin_src emacs-lisp
+(use-package term
+  :config
+  (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
+  ;;(setq explicit-zsh-args '())         ;; Use 'explicit-<shell>-args for shell-specific args
+
+  ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
+  (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
+
+(use-package eterm-256color
+  :hook (term-mode . eterm-256color-mode))
+#+end_src
+
+#+RESULTS:
+| eterm-256color-mode | (lambda nil (display-line-numbers-mode 0)) |
+* Writing
+** Mail
+#+begin_src emacs-lisp :tangle no
+(add-to-list 'load-path "/usr/local/share/emacs/site-lisp/mu4e")
+
+(use-package mu4e
+  :ensure nil
+  :config
+  (setq mu4e-contexts
+      (list
+       ;; Work account
+       (make-mu4e-context
+        :name "Kwali"
+        :match-func
+          (lambda (msg)
+            (when msg
+              (string-prefix-p "/Gmail" (mu4e-message-field msg :maildir))))
+        :vars '((user-mail-address . "juanpablo@kwali.ai")
+                (user-full-name    . "Juan Pablo Morales")
+                (smtpmail-smtp-server  . "smtp.gmail.com")
+                (smtpmail-smtp-service . 465)
+                (smtpmail-stream-type  . ssl)
+                (mu4e-drafts-folder  . "/Gmail/[Gmail]/Drafts")
+                (mu4e-sent-folder  . "/Gmail/[Gmail]/Sent Mail")
+                (mu4e-refile-folder  . "/Gmail/[Gmail]/All Mail")
+                (mu4e-trash-folder  . "/Gmail/[Gmail]/Trash")))))
+
+  (setq message-send-mail-function 'smtpmail-send-it)
+)
+
+
+#+end_src
+
+#+RESULTS:
+: t
+
+** Atomic Emacs
+#+begin_src emacs-lisp
+(use-package atomic-chrome
+  :ensure t
+  :config
+  (atomic-chrome-start-server)
+  (setq atomic-chrome-buffer-open-style 'frame)
+  (setq atomic-chrome-default-major-mode 'python-mode)
+  (setq atomic-chrome-url-major-mode-alist
+	'(("redmine" . textile-mode)))
+)
+#+end_src
+
+#+RESULTS:
+: t
+** Org Tree Slide
+#+begin_src emacs-lisp
+(use-package hide-lines)
+
+(defun my:hide-headers ()
+  ;; hide block begin/end markers
+  ;; not sure why but hide-lines *really* needs
+  ;; loaded each time we call this..
+  (load-library "hide-lines")
+  (hide-lines-matching
+   "#\\+\\(BEGIN\\|END\\)_\\(SRC\\|EXAMPLE\\|VERSE\\|QUOTE\\)")
+  (hide-lines-matching
+   "#\\+ATTR_ORG"))
+
+(defun my:show-headers ()
+  (hide-lines-show-all)
+  (org-show-all))
+
+(use-package command-log-mode)
+
+(use-package org-tree-slide
+  :custom
+  (org-image-actual-width nil)
+  (org-tree-slide-header nil)
+  (org-tree-slide-heading-emphasis t)
+  ;:hook ((org-tree-slide-play . my:hide-headers)
+  ;(org-tree-slide-stop . my:show-headers))
+  )
+#+end_src
+
+#+RESULTS:
+** Ox-hugo
+#+BEGIN_SRC emacs-lisp :results silent
+(use-package ox-hugo
+  :ensure t
+  :after ox)
+#+END_SRC
+
+#+RESULTS:
+: org-define-error
+#+begin_src emacs-lisp
+(use-package edit-server
+  :ensure t
+  :commands edit-server-start
+  :init (if after-init-time
+              (edit-server-start)
+            (add-hook 'after-init-hook
+                      #'(lambda() (edit-server-start))))
+  :config (setq edit-server-new-frame-alist
+                '((name . "Edit with Emacs FRAME")
+                  (top . 200)
+                  (left . 200)
+                  (width . 80)
+                  (height . 25)
+                  (minibuffer . t)
+                  (menu-bar-lines . t)
+                  (window-system . x))))
+#+end_src
+
+#+RESULTS:
+: t
