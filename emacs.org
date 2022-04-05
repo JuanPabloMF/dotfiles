@@ -1,4 +1,4 @@
-#+PROPERTY: header-args:emacs-lisp :tangle /home/juanpa/.emacs
+#+PROPERTY: header-args:emacs-lisp :tangle /home/juanpablo/.emacs
 
 * Base Config
 ** Startup
@@ -503,7 +503,7 @@ To be added
     (let ((default-directory path) (current-prefix-arg '(4)))
       (call-interactively 'shell)))
 
-(load-file (concat (car (directory-files "/home/juanpa/.emacs.d/elpa/" t "counsel*" nil)) "/counsel.el"))
+(load-file (concat (car (directory-files "/home/juanpablo/.emacs.d/elpa/" t "counsel*" nil)) "/counsel.el"))
 (defun open-shell-new-buffer (path)
   (let ((default-directory path) (current-prefix-arg '(4)))
     (call-interactively 'shell)
