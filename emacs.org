@@ -22,31 +22,45 @@
 ** Package Management
 
 #+begin_src emacs-lisp
-;; Initialize package sources
-(require 'package)
+  ;; Initialize package sources
+  ;; (require 'package)
 
-(setq package-archives '(("melpa" . "https://melpa.org/packages/")
-                         ("org" . "https://orgmode.org/elpa/")
-                         ("elpa" . "https://elpa.gnu.org/packages/")))
+  ;; (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+  ;;                          ("org" . "https://orgmode.org/elpa/")
+  ;;                          ("elpa" . "https://elpa.gnu.org/packages/")))
 
-(package-initialize)
-(unless package-archive-contents
-  (package-refresh-contents))
+  ;; (package-initialize)
+  ;; (unless package-archive-contents
+  ;;   (package-refresh-contents))
 
-  ;; Initialize use-package on non-Linux platforms
-(unless (package-installed-p 'use-package)
-  (package-install 'use-package))
+  ;; ;; Initialize use-package on non-Linux platforms
+  ;; (unless (package-installed-p 'use-package)
+  ;;   (package-install 'use-package))
 
-(require 'use-package)
-(setq use-package-always-ensure t)
+  ;; (require 'use-package)
+  ;; (setq use-package-always-ensure t)
 
-(add-to-list 'load-path "~/.emacs.d/site-lisp/")
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+	 (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+	(bootstrap-version 5))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+	  (url-retrieve-synchronously
+	   "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+	   'silent 'inhibit-cookies)
+	(goto-char (point-max))
+	(eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
 
+
+  (setq package-enable-at-startup nil)
+  (straight-use-package 'use-package)
+  (add-to-list 'load-path "~/.emacs.d/site-lisp/")
+  (use-package straight
+	     :custom (straight-use-package-by-default t))
 
 #+end_src
-
-#+RESULTS:
-| ~/.emacs.d/site-lisp/ | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/ | ~/.emacs.d/site-lisp/emacs-application-framework | ~/.emacs.d/lisp/ | /home/juanpablo/.emacs.d/elpa/ace-window-20200606.1259 | /home/juanpablo/.emacs.d/elpa/atomic-chrome-20210221.59 | /home/juanpablo/.emacs.d/elpa/auto-yasnippet-20191015.942 | /home/juanpablo/.emacs.d/elpa/avy-20201226.1734 | /home/juanpablo/.emacs.d/elpa/command-log-mode-20160413.447 | /home/juanpablo/.emacs.d/elpa/counsel-20210817.1505 | /home/juanpablo/.emacs.d/elpa/docker-tramp-20210729.508 | /home/juanpablo/.emacs.d/elpa/doom-modeline-20210807.922 | /home/juanpablo/.emacs.d/elpa/all-the-icons-20210728.2330 | /home/juanpablo/.emacs.d/elpa/doom-themes-20210731.818 | /home/juanpablo/.emacs.d/elpa/epresent-20160411.201 | /home/juanpablo/.emacs.d/elpa/general-20200516.50 | /home/juanpablo/.emacs.d/elpa/helm-c-yasnippet-20210330.16 | /home/juanpablo/.emacs.d/elpa/helm-20210816.1110 | /home/juanpablo/.emacs.d/elpa/helm-core-20210815.1700 | /home/juanpablo/.emacs.d/elpa/hide-lines-20210513.1636 | /home/juanpablo/.emacs.d/elpa/ivy-prescient-20210425.1720 | /home/juanpablo/.emacs.d/elpa/ivy-rich-20210409.931 | /home/juanpablo/.emacs.d/elpa/magit-20210818.813 | /home/juanpablo/.emacs.d/elpa/git-commit-20210806.1607 | /home/juanpablo/.emacs.d/elpa/magit-section-20210813.904 | /home/juanpablo/.emacs.d/elpa/no-littering-20210619.2158 | /home/juanpablo/.emacs.d/elpa/org-bullets-20200317.1740 | /home/juanpablo/.emacs.d/elpa/org-download-20210118.958 | /home/juanpablo/.emacs.d/elpa/async-20210501.1527 | /home/juanpablo/.emacs.d/elpa/org-tree-slide-20210224.1213 | /home/juanpablo/.emacs.d/elpa/ox-hugo-20210727.117 | /home/juanpablo/.emacs.d/elpa/popup-20210625.400 | /home/juanpablo/.emacs.d/elpa/prescient-20210724.1756 | /home/juanpablo/.emacs.d/elpa/projectile-20210811.435 | /home/juanpablo/.emacs.d/elpa/shrink-path-20190208.1335 | /home/juanpablo/.emacs.d/elpa/f-20210624.1103 | /home/juanpablo/.emacs.d/elpa/dash-20210708.2009 | /home/juanpablo/.emacs.d/elpa/s-20210616.619 | /home/juanpablo/.emacs.d/elpa/swiper-20210521.1319 | /home/juanpablo/.emacs.d/elpa/ivy-20210730.1743 | /home/juanpablo/.emacs.d/elpa/transient-20210816.1704 | /home/juanpablo/.emacs.d/elpa/use-package-20210207.1926 | /home/juanpablo/.emacs.d/elpa/bind-key-20210210.1609 | /home/juanpablo/.emacs.d/elpa/websocket-20210110.17 | /home/juanpablo/.emacs.d/elpa/with-editor-20210524.1654 | /home/juanpablo/.emacs.d/elpa/yasnippet-20200604.246 | /etc/emacs | /usr/local/share/emacs/27.1/site-lisp | /usr/local/share/emacs/site-lisp | /usr/share/emacs/site-lisp/dictionaries-common | /usr/share/emacs/27.1/site-lisp | /usr/share/emacs/site-lisp | /usr/share/emacs/27.1/lisp | /usr/share/emacs/27.1/lisp/vc | /usr/share/emacs/27.1/lisp/url | /usr/share/emacs/27.1/lisp/textmodes | /usr/share/emacs/27.1/lisp/progmodes | /usr/share/emacs/27.1/lisp/play | /usr/share/emacs/27.1/lisp/org | /usr/share/emacs/27.1/lisp/nxml | /usr/share/emacs/27.1/lisp/net | /usr/share/emacs/27.1/lisp/mh-e | /usr/share/emacs/27.1/lisp/mail | /usr/share/emacs/27.1/lisp/leim | /usr/share/emacs/27.1/lisp/language | /usr/share/emacs/27.1/lisp/international | /usr/share/emacs/27.1/lisp/image | /usr/share/emacs/27.1/lisp/gnus | /usr/share/emacs/27.1/lisp/eshell | /usr/share/emacs/27.1/lisp/erc | /usr/share/emacs/27.1/lisp/emulation | /usr/share/emacs/27.1/lisp/emacs-lisp | /usr/share/emacs/27.1/lisp/cedet | /usr/share/emacs/27.1/lisp/calendar | /usr/share/emacs/27.1/lisp/calc | /usr/share/emacs/27.1/lisp/obsolete | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/core | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/extension | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/img | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/airshare | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/browser | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/camera | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/demo | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-browser | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-manager | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-sender | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/image-viewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/jupyter | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/markdown-previewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/mermaid | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/mindmap | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/org-previewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/pdf-viewer | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/terminal | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/video-player | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/core/js | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/browser/aria2-ng | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-manager/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo/src | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/file-manager/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src/store | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/music-player/src/svg | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/netease-cloud-music/src/svg | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor/src/components | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/system-monitor/src/store | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo/src/assets | /home/juanpablo/.emacs.d/site-lisp/emacs-application-framework/app/vue-demo/src/components |
 
 ** UI
 *** Theme
@@ -248,31 +262,49 @@ enjoy using a lot.
 ** General
 #+begin_src emacs-lisp
 
-;; Emacs oriented keybinding. Do good, not evil!
-;; An interesting link for this is
-;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
+  ;; Emacs oriented keybinding. Do good, not evil!
+  ;; An interesting link for this is
+  ;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
 
-(use-package general
-  :config
-  (my/general-define-key
-   (("C-x C-b" 'counsel-switch-buffer
-     "C-s" 'swiper
-     "C-M-s" 'avy-goto-char
-     "M-w" 'easy-kill
-     "C-@" 'er/expand-region
-     "C-x o" 'ace-window
-     "M-o"   'other-window
-     "C-M-o" 'hydra-window/body
-     "C-c p" 'projectile-command-map
-     "C-c b" 'my/eaf-open-browser
-     "C-c B" 'hydra-browser/body
-     "C-c y w" 'aya-create
-     "C-c y y" 'aya-expand
-     "C-c y s" 'aya-persist-snippet
-     )
-    (:keymaps 'minibuffer-local-map
-	      "C-r" 'counsel-minibuffer-history)
-)))
+  (use-package general
+    :config
+    (my/general-define-key
+     (("M-w" 'easy-kill
+       "C-@" 'er/expand-region
+       "C-s" 'swiper
+       "C-M-s" 'avy-goto-char
+       "C-x o" 'ace-window
+       "M-o"   'other-window
+       "C-x C-b" 'counsel-switch-buffer
+       )
+      ("C-c o" 'hydra-window/body
+       "C-c p" 'projectile-command-map
+       "C-c b" 'my/eaf-open-browser
+       "C-c B" 'hydra-browser/body
+       "C-c y w" 'aya-create
+       "C-c y y" 'aya-expand
+       "C-c y s" 'aya-persist-snippet
+       )
+      (:keymaps 'minibuffer-local-map
+		"C-r" 'counsel-minibuffer-history)
+      (:keymaps 'corfu-map
+		:states 'insert
+		"C-n" #'corfu-next
+		"C-p" #'corfu-previous
+		"<escape>" #'corfu-quit
+		"<return>" #'corfu-insert
+		"H-SPC" #'corfu-insert-separator
+		;; "SPC" #'corfu-insert-separator ; Use when `corfu-quit-at-boundary' is non-nil
+		"M-d" #'corfu-show-documentation
+		"C-g" #'corfu-quit
+		"M-l" #'corfu-show-location)
+      (:keymaps 'corfu-map
+		     ;; This is a manual toggle for the documentation popup.
+		     [remap corfu-show-documentation] #'corfu-doc-toggle ; Remap the default doc command
+		     ;; Scroll in the documentation window
+		     "M-n" #'corfu-doc-scroll-up
+		     "M-p" #'corfu-doc-scroll-down)
+  )))
 #+end_src
 
 #+RESULTS:
@@ -323,7 +355,7 @@ enjoy using a lot.
 #+RESULTS:
 : hydra-window/body
 *** EAF
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp 
 ;; More of a mnemonic hydra than a cluster of keys to be chained like aya keybinds for example.
 (pretty-hydra-define hydra-browser (:foreign-keys warn :quit-key "q")
 ("Go to"
@@ -566,7 +598,6 @@ To be added
   (visual-line-mode 1))
 
 (use-package org
-  :pin org
   :commands (org-capture org-agenda)
   :hook (org-mode . efs/org-mode-setup)
   :config
@@ -580,9 +611,6 @@ To be added
   (setq org-confirm-babel-evaluate nil)
   (setq org-capture-templates nil)
 )
-
-
-
 #+end_src
 
 #+RESULTS:
@@ -610,7 +638,7 @@ To be added
 (use-package magit)
 #+end_src
 ** EAF
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package eaf
   :load-path "~/.emacs.d/site-lisp/emacs-application-framework" ; Set to "/usr/share/emacs/site-lisp/eaf" if installed from AUR
   :custom
@@ -636,7 +664,7 @@ To be added
 (equal current-prefix-arg nil)
 ** Nyxt
 
-#+begin_src emacs-lisp
+#+begin_src emacs-lisp :tangle no
     (use-package emacs-with-nyxt
       :ensure nil
       :load-path "~/.emacs.d/site-lisp/emacs-with-nyxt"
@@ -678,10 +706,154 @@ To be added
 
 (use-package eterm-256color
   :hook (term-mode . eterm-256color-mode))
+
+(use-package vterm
+    )
 #+end_src
 
 #+RESULTS:
-| eterm-256color-mode | (lambda nil (display-line-numbers-mode 0)) |
+: t
+** In-buffer Completion
+
+#+begin_src emacs-lisp
+      (use-package corfu
+
+      ;; Optional customizations
+      ;; :custom
+      ;; (corfu-cycle t)                ;; Enable cycling for`corfu-next/previous'
+        :custom
+        ;; (corfu-auto t)			  ;; Enable auto completion
+        (corfu-separator ?\s)          ;; Orderless field separator
+        (corfu-quit-at-boundary 'separator)   ;; Never quit at completion boundary
+        (corfu-quit-no-match 'separator)      ;; Never quit, even if there is no match
+        (corfu-preview-current 'insert)    ;; Disable current candidate preview
+        ;; (corfu-preselect-first nil)    ;; Disable candidate preselection
+        ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
+        (corfu-echo-documentation nil) ;; Disable documentation in the echo area
+      ;; (corfu-scroll-margin 5)        ;; Use scroll margin
+
+        (corfu-auto t)
+        (corfu-auto-prefix 2)
+        (corfu-auto-delay 0.25)
+      ;; You may want to enable Corfu only for certain modes.
+      ;; :hook ((prog-mode . corfu-mode)
+      ;;        (shell-mode . corfu-mode)
+      ;;        (eshell-mode . corfu-mode))
+
+      ;; Recommended: Enable Corfu globally.
+      ;; This is recommended since dabbrev can be used globally (M-/).
+      :init
+      (corfu-global-mode))
+
+    ;; Use dabbrev with Corfu!
+    (use-package dabbrev
+      ;; Swap M-/ and C-M-/
+      :bind (("M-/" . dabbrev-completion)
+             ("C-M-/" . dabbrev-expand)))
+
+
+        ;; Add extensions
+      (use-package cape
+        ;; Bind dedicated completion commands
+        ;; Alternative prefix keys: C-c p, M-p, M-+, ...
+        :bind (("C-c p p" . completion-at-point) ;; capf
+               ("C-c p t" . complete-tag)        ;; etags
+               ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+               ("C-c p f" . cape-file)
+               ("C-c p k" . cape-keyword)
+               ("C-c p s" . cape-symbol)
+               ("C-c p a" . cape-abbrev)
+               ("C-c p i" . cape-ispell)
+               ("C-c p l" . cape-line)
+               ("C-c p w" . cape-dict)
+               ("C-c p \\" . cape-tex)
+               ("C-c p _" . cape-tex)
+               ("C-c p ^" . cape-tex)
+               ("C-c p &" . cape-sgml)
+               ("C-c p r" . cape-rfc1345))
+        :init
+        ;; Add `completion-at-point-functions', used by `completion-at-point'.
+        (add-to-list 'completion-at-point-functions #'cape-file)
+        (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+        (add-to-list 'completion-at-point-functions
+                     (cape-company-to-capf #'elpy-company-backend))
+        ;;(add-to-list 'completion-at-point-functions #'cape-keyword)
+        ;;(add-to-list 'completion-at-point-functions #'cape-tex)
+        ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
+        ;;(add-to-list 'completion-at-point-functions #'cape-      ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
+        ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
+        ;;(add-to-list 'completion-at-point-functions #'cape-dict)
+        ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
+        ;;(add-to-list 'completion-at-point-functions #'cape-line)
+      )
+
+  (use-package kind-icon
+    :after corfu
+    :custom
+    (kind-icon-use-icons t)
+    (kind-icon-default-face 'corfu-default) ; Have background color be the same as `corfu' face background
+    (kind-icon-blend-background nil)  ; Use midpoint color between foreground and background colors ("blended")?
+    (kind-icon-blend-frac 0.08)
+
+    ;; NOTE 2022-02-05: `kind-icon' depends `svg-lib' which creates a cache
+    ;; directory that defaults to the `user-emacs-directory'. Here, I change that
+    ;; directory to a location appropriate to `no-littering' conventions, a
+    ;; package which moves directories of other packages to sane locations.
+    (svg-lib-icons-dir (no-littering-expand-var-file-name "svg-lib/cache/")) ; Change cache dir
+    :config
+    (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter) ; Enable `kind-icon'
+
+    ;; Add hook to reset cache so the icon colors match my theme
+    ;; NOTE 2022-02-05: This is a hook which resets the cache whenever I switch
+    ;; the theme using my custom defined command for switching themes. If I don't
+    ;; do this, then the backgound color will remain the same, meaning it will not
+    ;; match the background color corresponding to the current theme. Important
+    ;; since I have a light theme and dark theme I switch between. This has no
+    ;; function unless you use something similar
+    (add-hook 'kb/themes-hooks #'(lambda () (interactive) (kind-icon-reset-cache))))
+
+  (use-package corfu-doc
+  ;; NOTE 2022-02-05: At the time of writing, `corfu-doc' is not yet on melpa
+  :straight (corfu-doc :type git :host github :repo "galeo/corfu-doc")
+  :after corfu
+  :hook (corfu-mode . corfu-doc-mode)
+  :custom
+  (corfu-doc-delay 0.5)
+  (corfu-doc-max-width 70)
+  (corfu-doc-max-height 20)
+
+  ;; NOTE 2022-02-05: I've also set this in the `corfu' use-package to be
+  ;; extra-safe that this is set when corfu-doc is loaded. I do not want
+  ;; documentation shown in both the echo area and in the `corfu-doc' popup.
+  (corfu-echo-documentation nil))
+#+end_src
+
+#+RESULTS:
+| corfu-doc-mode | corfu-mode-set-explicitly |
+** Syntax Checking
+#+begin_src emacs-lisp
+  (use-package flycheck
+    :defer t
+    :hook
+    (lsp-mode . flycheck-mode)
+    (elpy-mode . flycheck-mode)
+    )
+#+end_src
+
+#+RESULTS:
+| flycheck-mode |
+** Python
+
+#+begin_src emacs-lisp
+    (use-package elpy
+    
+    :init
+    (elpy-enable)
+    (setq elpy-rpc-backend "jedi"))
+#+end_src
+
+#+RESULTS:
+
 * Writing
 ** Mail
 #+begin_src emacs-lisp :tangle no
@@ -721,7 +893,7 @@ To be added
 ** Atomic Emacs
 #+begin_src emacs-lisp
 (use-package atomic-chrome
-  :ensure t
+  
   :config
   (atomic-chrome-start-server)
   (setq atomic-chrome-buffer-open-style 'frame)
@@ -767,7 +939,6 @@ To be added
 ** Ox-hugo
 #+BEGIN_SRC emacs-lisp :results silent
 (use-package ox-hugo
-  :ensure t
   :after ox)
 #+END_SRC
 
@@ -775,7 +946,6 @@ To be added
 : org-define-error
 #+begin_src emacs-lisp
 (use-package edit-server
-  :ensure t
   :commands edit-server-start
   :init (if after-init-time
               (edit-server-start)
