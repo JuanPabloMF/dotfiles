@@ -1,4 +1,4 @@
-#+PROPERTY: header-args:emacs-lisp :tangle /home/juanpablo/.emacs
+#+PROPERTY: header-args:emacs-lisp :tangle /home/juanpablo/.emacs :results silent
 #+STARTUP: overview
 
 * Base Config
@@ -293,51 +293,56 @@ enjoy using a lot.
 ** General
 #+begin_src emacs-lisp
 
-  ;; Emacs oriented keybinding. Do good, not evil!
-  ;; An interesting link for this is
-  ;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
+    ;; Emacs oriented keybinding. Do good, not evil!
+    ;; An interesting link for this is
+    ;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
 
-  (use-package general
-    :config
-    (my/general-define-key
-     (("M-w" 'easy-kill
-       "C-@" 'er/expand-region
-       "C-s" 'swiper
-       "M-s" 'swiper-isearch
-       "C-M-s" 'avy-goto-char
-       "C-x o" 'ace-window
-       "M-o"   'other-window
-       "C-x C-b" 'persp-counsel-switch-buffer
-       ;; "C-x x" 'persp-mode-prefix-key
-       )
-      ("C-c w" 'hydra-window/body
-       "C-c p" 'projectile-command-map
-       "C-c b" 'my/eaf-open-browser
-       "C-c B" 'hydra-browser/body
-       "C-c y w" 'aya-create
-       "C-c y y" 'aya-expand
-       "C-c y l" 'ivy-yasnippet
-       "C-c y s" 'aya-persist-snippet     
-       )
-      (lsp-mode-map
-       "C-c l u r" 'lsp-ui-peek-find-references
-       "C-c l u d" 'lsp-ui-peek-find-definitions
-       "C-c l u g" 'lsp-ui-doc-glance
-       "C-c l u f" 'lsp-ui-doc-focus-frame
-       "C-c l u m" 'lsp-ui-imenu
-       "C-c l u t" 'lsp-treemacs-symbols
-       )
-      (python-mode-map
-       "C-M-b" 'python-nav-backward-block
-       "C-M-f" 'python-nav-forward-block
-       "C-M-a" 'python-nav-backward-defun
-       "C-M-e" 'python-nav-forward-defun
-       "C-M-u" 'python-nav-up-list
-       "\r" 'newline-and-indent
-       )
-      (minibuffer-local-map
-       "C-r" 'counsel-minibuffer-history)
-  )))
+    (use-package general
+      :config
+      (my/general-define-key
+       (("M-w" 'easy-kill
+         "C-@" 'er/expand-region
+         "C-s" 'swiper-isearch
+         "M-s" 'swiper
+         "C-M-s" 'avy-goto-char
+         "C-x o" 'other-window
+         "M-o" 'ace-window 
+         "C-x C-b" 'persp-counsel-switch-buffer
+         ;; "C-x x" 'persp-mode-prefix-key
+         )
+        ("C-c w" 'hydra-window/body
+         "C-c p" 'projectile-command-map
+         ;; "C-c b" 'my/eaf-open-browser	
+         ;; "C-c B" 'hydra-browser/body
+         "C-c e" 'elfeed
+         "C-c y w" 'aya-create
+         "C-c y y" 'aya-expand
+         "C-c y l" 'ivy-yasnippet
+         "C-c y s" 'aya-persist-snippet
+         "C->" 'mc/mark-next-like-this
+         "C-<" 'mc/mark-previous-like-this
+         "C-c C->" 'mc/mark-all-like-this
+         "C-S-c C-S-c" 'mc/edit-lines
+         )
+        (lsp-mode-map
+         "C-c l u r" 'lsp-ui-peek-find-references
+         "C-c l u d" 'lsp-ui-peek-find-definitions
+         "C-c l u g" 'lsp-ui-doc-glance
+         "C-c l u f" 'lsp-ui-doc-focus-frame
+         "C-c l u m" 'lsp-ui-imenu
+         "C-c l u t" 'lsp-treemacs-symbols
+         )
+        (python-mode-map
+         "C-M-b" 'python-nav-backward-block
+         "C-M-f" 'python-nav-forward-block
+         "C-M-a" 'python-nav-backward-defun
+         "C-M-e" 'python-nav-forward-defun
+         "C-M-u" 'python-nav-up-list
+         "\r" 'newline-and-indent
+         )
+        (minibuffer-local-map
+         "C-r" 'counsel-minibuffer-history)
+    )))
 #+end_src
 
 #+RESULTS:
@@ -574,6 +579,13 @@ To be added
 #+begin_src emacs-lisp
 (use-package expand-region)
 (use-package easy-kill)
+#+end_src
+
+#+RESULTS:
+
+** Multiple cursors
+#+begin_src emacs-lisp
+(use-package multiple-cursors)  
 #+end_src
 
 #+RESULTS:
@@ -1267,7 +1279,6 @@ To be added
 : t
 
 ** EAF
-#+begin_src emacs-lisp
   (use-package eaf
     :straight (eaf
                :type git
@@ -1295,8 +1306,6 @@ To be added
       (call-interactively #'eaf-open-browser)
       (eaf-open (eaf-wrap-url "www.google.com") "browser" args))
   )
-#+end_src
-
 
 (equal current-prefix-arg nil)
 ** Nyxt
@@ -1335,6 +1344,21 @@ To be added
       (use-package restclient
         :mode (("\\.http\\'" . restclient-mode))
         )
+#+end_src
+
+#+RESULTS:
+
+
+** Elfeed
+
+#+begin_src emacs-lisp
+  (use-package elfeed
+    :config
+    (setq elfeed-feeds
+      '("https://planet.emacslife.com/atom.xml")
+      )
+    )
+
 #+end_src
 
 #+RESULTS:
