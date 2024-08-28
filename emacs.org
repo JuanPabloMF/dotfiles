@@ -9,16 +9,16 @@
 * Base Config
 ** Native Comp
 #+begin_src emacs-lisp
-  (when (and (fboundp 'native-comp-available-p)
-           (native-comp-available-p))
+  ;; (when (and (fboundp 'native-comp-available-p)
+  ;;          (native-comp-available-p))
 
-    (progn
-      (setq native-comp-async-report-warnings-errors nil)
-      (setq comp-deferred-compilation t)
-      (add-to-list 'native-comp-eln-load-path (expand-file-name "eln-cache/" user-emacs-directory))
-      (setq package-native-compile t)
-      )
-    )
+  ;;   (progn
+  ;;     (setq native-comp-async-report-warnings-errors nil)
+  ;;     (setq comp-deferred-compilation t)
+  ;;     (add-to-list 'native-comp-eln-load-path (expand-file-name "eln-cache/" user-emacs-directory))
+  ;;     (setq package-native-compile t)
+  ;;     )
+  ;;   )
 #+end_src
 
 ** Package Management
@@ -69,6 +69,127 @@
 
 ** Customize
 #+begin_src emacs-lisp
+
+  (use-package no-littering
+    :init
+     (setq no-littering-etc-directory
+	(expand-file-name "config/" user-emacs-directory))
+     (setq no-littering-var-directory
+	   (expand-file-name "data/" user-emacs-directory))
+    )
+
+  ;; no-littering doesn't set this by default so we must place
+  ;; auto save files in the same path as it uses for sessions
+  (setq auto-save-file-name-transforms
+	`((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+#+end_src
+
+** UI
+*** Theme
+
+#+begin_src emacs-lisp
+(use-package doom-themes
+  :init (load-theme 'doom-palenight t))
+
+(use-package all-the-icons)
+
+(use-package doom-modeline
+  :init (doom-modeline-mode 1)
+  :custom ((doom-modeline-height 15)))
+#+end_src
+
+#+RESULTS:
+
+*** Tweaks
+ #+begin_src emacs-lisp
+ (setq inhibit-startup-message t)
+
+ (scroll-bar-mode -1)        ; Disable visible scrollbar
+ (tool-bar-mode -1)          ; Disable the toolbar
+ (tooltip-mode -1)           ; Disable tooltips
+ (set-fringe-mode 10)        ; Give some breathing room
+
+ (menu-bar-mode -1)            ; Disable the menu bar
+
+ ;; Set up the visible bell
+ (setq visible-bell t)
+
+ (column-number-mode)
+ (global-display-line-numbers-mode t)
+
+ ;; Set frame transparency
+ (set-frame-parameter (selected-frame) 'alpha 95)
+ (add-to-list 'default-frame-alist `(alpha . ,95))
+ ;;(set-frame-parameter (selected-frame) 'fullscreen 'maximized)
+ ;;(add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+ ;; Disable line numbers for some modes
+ (dolist (mode '(org-mode-hook
+                 term-mode-hook
+                 shell-mode-hook
+                 treemacs-mode-hook
+                 eshell-mode-hook))
+   (add-hook mode (lambda () (display-line-numbers-mode 0))))
+ #+end_src
+
+*** Fonts
+
+#+begin_src emacs-lisp
+  ;; (set-face-attribute 'default nil :font "Iosevka" :height 140)
+
+  ;; ;; Set the fixed pitch face
+  ;; (set-face-attribute 'fixed-pitch nil :font "Iosevka" :height 140)
+
+  ;; ;; Set the variable pitch face
+  ;; (set-face-attribute 'variable-pitch nil :font "Iosevka Aile" :height 160 :weight 'regular)
+#+end_src
+
+*** Dashboard
+#+begin_src emacs-lisp
+  (use-package page-break-lines)
+
+  (use-package dashboard 
+    :init      
+    (setq dashboard-set-heading-icons t)
+    (setq dashboard-set-file-icons t)
+    (setq dashboard-banner-logo-title "Emacs Is More Than A Text Editor!")
+    (setq dashboard-startup-banner `logo) 
+    (setq dashboard-center-content t)
+    (setq dashboard-set-navigator t)
+    (setq dashboard-page-separator  "\n\f\n")
+    (setq dashboard-items '((recents . 5)
+                            (agenda . 5 )
+                            (bookmarks . 5)
+                            (projects . 3)))
+    :config
+    (dashboard-modify-heading-icons '((recents . "file-text")
+                                      (bookmarks . "book"))))
+
+  ;; (defun my/initial-window-buffer-setup ()
+  ;;   (switch-to-buffer-other-window "*scratch*")
+  ;;   (switch-to-buffer-other-window "*dashboard*")
+  ;; )
+#+end_src
+*** Disable Bell
+#+begin_src emacs-lisp
+;;Avoid having noisy sounds when scrolling to the bottom of a buffer
+(defun my-bell-function ()
+  (unless (memq this-command
+		'(isearch-abort abort-recursive-edit exit-minibuffer
+				keyboard-quit mwheel-scroll down up next-line previous-line
+				backward-char forward-char))
+    (ding)))
+(setq ring-bell-function 'my-bell-function)
+(setq ring-bell-function 'ignore)
+#+end_src
+
+** Tweaks
+*** Clean Folders
+
+#+begin_src emacs-lisp
+  ;; NOTE: If you want to move everything out of the ~/.emacs.d folder
+  ;; reliably, set `user-emacs-directory` before loading no-littering!
+  ;(setq user-emacs-directory "~/.cache/emacs")
 
   (use-package no-littering
     :init
