@@ -1,93 +1,184 @@
-#+PROPERTY: header-args:emacs-lisp :tangle /home/juanpablo/.emacs :results silent
-#+STARTUP: overview
+#+PROPERTY: header-args:emacs-lisp :tangle /home/juanpablo/.emacs
 
-* Ideas
-** TODO filter/sort buffers  per "app"
-** TODO manage better the "C-x <-" behavior (guessing buffer you wanna go)
-** TODO leave anchors you can quickly move to (like C-x C-x)->see registers
-** DONE save history
 * Base Config
+** Startup
 ** Native Comp
 #+begin_src emacs-lisp
-  (when (and (fboundp 'native-comp-available-p)
-           (native-comp-available-p))
+    (when (and (fboundp 'native-comp-available-p)
+             (native-comp-available-p))
 
-    (progn
-      (setq native-comp-async-report-warnings-errors nil)
-      (setq comp-deferred-compilation t)
-      (add-to-list 'native-comp-eln-load-path (expand-file-name "eln-cache/" user-emacs-directory))
-      (setq package-native-compile t)
+      (progn
+        (setq native-comp-async-report-warnings-errors nil)
+        (setq comp-deferred-compilation t)
+        (add-to-list 'native-comp-eln-load-path (expand-file-name "eln-cache/" user-emacs-directory))
+        (setq package-native-compile t)
+        )
       )
-    )
-#+end_src
-
-** Package Management
-
-#+begin_src emacs-lisp
-    ;; Initialize package sources
-    ;; (require 'package)
-
-    ;; (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-    ;;                          ("org" . "https://orgmode.org/elpa/")
-    ;;                          ("elpa" . "https://elpa.gnu.org/packages/")))
-
-    ;; (package-initialize)
-    ;; (unless package-archive-contents
-    ;;   (package-refresh-contents))
-
-    ;; ;; Initialize use-package on non-Linux platforms
-    ;; (unless (package-installed-p 'use-package)
-    ;;   (package-install 'use-package))
-
-    ;; (require 'use-package)
-    ;; (setq use-package-always-ensure t)
-
-    (defvar bootstrap-version)
-    (let ((bootstrap-file
-           (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-          (bootstrap-version 5))
-      (unless (file-exists-p bootstrap-file)
-        (with-current-buffer
-            (url-retrieve-synchronously
-             "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-             'silent 'inhibit-cookies)
-          (goto-char (point-max))
-          (eval-print-last-sexp)))
-      (load bootstrap-file nil 'nomessage))
-
-
-    (setq package-enable-at-startup nil)
-    (add-to-list 'load-path "~/.emacs.d/site-lisp/")
-    (setq use-package-always-ensure t)
-    (straight-use-package 'use-package)
-    (setq straight-use-package-by-default t)
-    (straight-use-package 'org)
 #+end_src
 
 #+RESULTS:
 : t
 
-** Customize
-#+begin_src emacs-lisp
+** Package Management
 
-  (use-package no-littering
-    :init
-     (setq no-littering-etc-directory
-	(expand-file-name "config/" user-emacs-directory))
-     (setq no-littering-var-directory
-	   (expand-file-name "data/" user-emacs-directory))
-    )
-
-  ;; no-littering doesn't set this by default so we must place
-  ;; auto save files in the same path as it uses for sessions
-  (setq auto-save-file-name-transforms
-	`((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
-#+end_src
-*** LSP optimization settings
 #+begin_src emacs-lisp
-  (setq gc-cons-threshold 100000000)
-  (setq read-process-output-max (* 1024 1024))
+  ;; Initialize package sources
+  ;; (require 'package)
+
+  ;; (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+  ;;                          ("org" . "https://orgmode.org/elpa/")
+  ;;                          ("elpa" . "https://elpa.gnu.org/packages/")))
+
+  ;; (package-initialize)
+  ;; (unless package-archive-contents
+  ;;   (package-refresh-contents))
+
+  ;; ;; Initialize use-package on non-Linux platforms
+  ;; (unless (package-installed-p 'use-package)
+  ;;   (package-install 'use-package))
+
+  ;; (require 'use-package)
+  ;; (setq use-package-always-ensure t)
+
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+	 (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+	(bootstrap-version 5))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+	  (url-retrieve-synchronously
+	   "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+	   'silent 'inhibit-cookies)
+	(goto-char (point-max))
+	(eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
+
+
+  (setq package-enable-at-startup nil)
+  (straight-use-package 'use-package)
+  (add-to-list 'load-path "~/.emacs.d/site-lisp/")
+  (use-package straight
+	     :custom (straight-use-package-by-default t))
+
 #+end_src
+
+** UI
+*** Theme
+
+#+begin_src emacs-lisp
+(use-package doom-themes
+  :init (load-theme 'doom-palenight t))
+
+(use-package all-the-icons)
+
+(use-package doom-modeline
+  :init (doom-modeline-mode 1)
+  :custom ((doom-modeline-height 15)))
+#+end_src
+
+#+RESULTS:
+
+*** Tweaks
+ #+begin_src emacs-lisp
+ (setq inhibit-startup-message t)
+
+ (scroll-bar-mode -1)        ; Disable visible scrollbar
+ (tool-bar-mode -1)          ; Disable the toolbar
+ (tooltip-mode -1)           ; Disable tooltips
+ (set-fringe-mode 10)        ; Give some breathing room
+
+ (menu-bar-mode -1)            ; Disable the menu bar
+
+ ;; Set up the visible bell
+ (setq visible-bell t)
+
+ (column-number-mode)
+ (global-display-line-numbers-mode t)
+
+ ;; Set frame transparency
+ (set-frame-parameter (selected-frame) 'alpha 95)
+ (add-to-list 'default-frame-alist `(alpha . ,95))
+ ;;(set-frame-parameter (selected-frame) 'fullscreen 'maximized)
+ ;;(add-to-list 'default-frame-alist '(fullscreen . maximized))
+
+ ;; Disable line numbers for some modes
+ (dolist (mode '(org-mode-hook
+                 term-mode-hook
+                 shell-mode-hook
+                 treemacs-mode-hook
+                 eshell-mode-hook))
+   (add-hook mode (lambda () (display-line-numbers-mode 0))))
+ #+end_src
+
+*** Fonts
+
+#+begin_src emacs-lisp
+(set-face-attribute 'default nil :font "Iosevka" :height 140)
+
+;; Set the fixed pitch face
+(set-face-attribute 'fixed-pitch nil :font "Iosevka" :height 140)
+
+;; Set the variable pitch face
+(set-face-attribute 'variable-pitch nil :font "Iosevka Aile" :height 160 :weight 'regular)
+#+end_src
+
+*** Dashboard
+#+begin_src emacs-lisp
+(use-package page-break-lines)
+
+(use-package dashboard 
+  :init      
+  (setq dashboard-set-heading-icons t)
+  (setq dashboard-set-file-icons t)
+  (setq dashboard-banner-logo-title "Emacs Is More Than A Text Editor!")
+  (setq dashboard-startup-banner `logo) 
+  (setq dashboard-center-content t)
+  (setq dashboard-set-navigator t)
+  (setq dashboard-page-separator  "\n\f\n")
+  (setq dashboard-items '((recents . 5)
+                          (agenda . 5 )
+                          (bookmarks . 5)
+                          (projects . 3)))
+  :config
+  (dashboard-modify-heading-icons '((recents . "file-text")
+                                    (bookmarks . "book"))))
+
+(defun my/initial-window-buffer-setup ()
+  (switch-to-buffer-other-window "*scratch*")
+  (switch-to-buffer-other-window "*dashboard*")
+)
+
+(add-hook 'after-init-hook #'my/initial-window-buffer-setup)
+#+end_src
+*** Disable Bell
+#+begin_src emacs-lisp
+;;Avoid having noisy sounds when scrolling to the bottom of a buffer
+(defun my-bell-function ()
+  (unless (memq this-command
+		'(isearch-abort abort-recursive-edit exit-minibuffer
+				keyboard-quit mwheel-scroll down up next-line previous-line
+				backward-char forward-char))
+    (ding)))
+(setq ring-bell-function 'my-bell-function)
+(setq ring-bell-function 'ignore)
+#+end_src
+
+** Tweaks
+*** Clean Folders
+
+#+begin_src emacs-lisp
+;; NOTE: If you want to move everything out of the ~/.emacs.d folder
+;; reliably, set `user-emacs-directory` before loading no-littering!
+;(setq user-emacs-directory "~/.cache/emacs")
+
+(use-package no-littering)
+
+;; no-littering doesn't set this by default so we must place
+;; auto save files in the same path as it uses for sessions
+(setq auto-save-file-name-transforms
+      `((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+#+end_src
+
 * Lisp
 ** Macros
 
@@ -120,77 +211,18 @@ enjoy using a lot.
 #+end_src
 ** Functions
 #+begin_src emacs-lisp
-  (defun my/load-default-init-file ()
-    (interactive)
-    (load-file "~/.emacs")
-  )
+(defun load-default-init-file ()
+  (interactive)
+  (load-file "~/.emacs")
+)
+#+end_src
+*** F-strings
+#+begin_src emacs-lisp
 
-  (defun my/stop-emacs-server ()
-    (interactive)
-    (eshell-command "ps aux | grep 'emacs --daemon' | awk  '{print $2}' | xargs kill -9")
-    )
-
-  (defun my/insert-functions-in-scratch-buffer (str)
-    (let
-      ((l (apropos str)))
-      (dolist (x l)
-        (with-current-buffer
-            "*scratch*"
-          (progn
-            (insert "\n")
-            (insert (symbol-name (car x)))
-            )
-          )
-        )
-      )
-    )
-
-  (defun my/swiper-isearch-dwim ()
-      (interactive)
-      ;; Are we using multiple cursors?
-      (cond ((and (boundp 'multiple-cursors-mode)
-                  multiple-cursors-mode
-                  (fboundp  'phi-search))
-             (call-interactively 'phi-search))
-            ;; Are we defining a macro?
-            (defining-kbd-macro
-              (call-interactively 'swiper-isearch))
-            ;; Fall back to swiper.
-            (t
-             ;; Wrap around swiper results.
-             (let ((ivy-wrap t))
-               ;; If region is active, prepopulate swiper's search term.
-               (if (and transient-mark-mode mark-active (not (eq (mark) (point))))
-                   (let ((region (buffer-substring-no-properties (mark) (point))))
-                     (deactivate-mark)
-                     (swiper-isearch region))
-                 (swiper-isearch))))))
-
-    (defun my/swiper-isearch-backward-dwim ()
-      (interactive)
-      ;; Are we using multiple cursors?
-      (cond ((and (boundp 'multiple-cursors-mode)
-                  multiple-cursors-mode
-                  (fboundp  'phi-search-backward))
-             (call-interactively 'phi-search-backward))
-            ;; Are we defining a macro?
-            (defining-kbd-macro
-              (call-interactively 'isearch-backward))
-            ;; Fall back to swiper.
-            (t
-             ;; Wrap around swiper results.
-             (let ((ivy-wrap t))
-               ;; If region is active, prepopulate swiper's search term.
-               (if (and transient-mark-mode mark-active (not (eq (mark) (point))))
-                   (let ((region (buffer-substring-no-properties (mark) (point))))
-                     (deactivate-mark)
-                     (swiper-isearch-backward region))
-                 (swiper-isearch-backward))))))
 #+end_src
 
 #+RESULTS:
-: my/insert-functions-in-scratch-buffer
-
+: f-string
 *** Remote Jupyter tools
 #+begin_src emacs-lisp
 (defun execute-command-remote (remote path command)
@@ -226,7 +258,7 @@ enjoy using a lot.
 #+RESULTS:
 : open-gpu-jupyter
 
-* Keybindings
+* Keybindings & Aide-memoire
 ** General
 #+begin_src emacs-lisp
 
@@ -239,64 +271,39 @@ enjoy using a lot.
     (my/general-define-key
      (("M-w" 'easy-kill
        "C-@" 'er/expand-region
-       "C-s" 'my/swiper-isearch-dwim
-       "M-s" 'swiper
+       "C-s" 'swiper
        "C-M-s" 'avy-goto-char
-       "C-x o" 'other-window
-       "M-o" 'ace-window 
-       "C-x C-b" 'persp-counsel-switch-buffer
-       ;; "C-x x" 'persp-mode-prefix-key
+       "C-x o" 'ace-window
+       "M-o"   'other-window
+       "C-x C-b" 'counsel-switch-buffer
        )
-      ("C-c w" 'hydra-window/body
+      ("C-c o" 'hydra-window/body
        "C-c p" 'projectile-command-map
-       ;; "C-c b" 'my/eaf-open-browser	
-       ;; "C-c B" 'hydra-browser/body
-       "C-c e" 'elfeed
+       "C-c b" 'my/eaf-open-browser
+       "C-c B" 'hydra-browser/body
        "C-c y w" 'aya-create
        "C-c y y" 'aya-expand
-       "C-c y l" 'ivy-yasnippet
        "C-c y s" 'aya-persist-snippet
-       "C->" 'mc/mark-next-like-this
-       "C-<" 'mc/mark-previous-like-this
-       "C-c C->" 'mc/mark-all-like-this
-       "C-S-c C-S-c" 'mc/edit-lines
        )
-      (lsp-mode-map
-       "C-c l u r" 'lsp-ui-peek-find-references
-       "C-c l u d" 'lsp-ui-peek-find-definitions
-       "C-c l u g" 'lsp-ui-doc-glance
-       "C-c l u f" 'lsp-ui-doc-focus-frame
-       "C-c l u m" 'lsp-ui-imenu
-       "C-c l u t" 'lsp-treemacs-symbols
-       )
-      (python-mode-map
-       "C-M-b" 'python-nav-backward-block
-       "C-M-f" 'python-nav-forward-block
-       "C-M-a" 'python-nav-backward-defun
-       "C-M-e" 'python-nav-forward-defun
-       "C-M-u" 'python-nav-up-list
-       "\r" 'newline-and-indent
-       )
-      (minibuffer-local-map
-       "C-r" 'counsel-minibuffer-history)
-
-       (dired-mode-map
-              "C-o" 'casual-dired-tmenu
-              "s" 'casual-dired-sort-by-tmenu
-              "/" 'casual-dired-search-replace-tmenu)
-
-            (Info-mode-map 
-              "C-o" 'casual-info-tmenu)
-
-            (bookmark-bmenu-mode-map
-              "C-o" 'casual-bookmarks-tmenu
-              "S" 'casual-bookmarks-sortby-tmenu
-              "J" 'bookmark-jump)
-
-            (reb-mode-map 
-              "C-o" 'casual-re-builder-tmenu)
-
-            
+      (:keymaps 'minibuffer-local-map
+		"C-r" 'counsel-minibuffer-history)
+      (:keymaps 'corfu-map
+		:states 'insert
+		"C-n" #'corfu-next
+		"C-p" #'corfu-previous
+		"<escape>" #'corfu-quit
+		"<return>" #'corfu-insert
+		"H-SPC" #'corfu-insert-separator
+		;; "SPC" #'corfu-insert-separator ; Use when `corfu-quit-at-boundary' is non-nil
+		"M-d" #'corfu-show-documentation
+		"C-g" #'corfu-quit
+		"M-l" #'corfu-show-location)
+      (:keymaps 'corfu-map
+		     ;; This is a manual toggle for the documentation popup.
+		     [remap corfu-show-documentation] #'corfu-doc-toggle ; Remap the default doc command
+		     ;; Scroll in the documentation window
+		     "M-n" #'corfu-doc-scroll-up
+		     "M-p" #'corfu-doc-scroll-down)
   )))
 #+end_src
 
@@ -425,29 +432,39 @@ To be added
 #+RESULTS:
 : t
 
+** Yasnippets
+#+begin_src emacs-lisp
+(use-package yasnippet
+  :init
+  (setq yas-snippet-dirs
+	'("~/.emacs.d/snippets") ;; personal snippets
+	))
+
+(use-package auto-yasnippet)
+
+#+end_src
 * Discoverability
 ** Ivy
 *** Basics and Counsel
 
  #+begin_src emacs-lisp
-   (use-package ivy
-     :diminish
-     :config
-     (ivy-mode 1))
+ (use-package ivy
+   :diminish
+   :config
+   (ivy-mode 1))
 
-   (use-package counsel
-     :custom
-     (counsel-linux-app-format-function #'counsel-linux-app-format-function-name-only)
-     :config
-     (counsel-mode 1))
+ (use-package counsel
+   :custom
+   (counsel-linux-app-format-function #'counsel-linux-app-format-function-name-only)
+   :config
+   (counsel-mode 1))
 
-   (use-package ivy-rich
-     :after ivy
-     :init
-     (ivy-rich-mode 1)
-     (setq ivy-rich-parse-remote-buffer nil))
+ (use-package ivy-rich
+   :after ivy
+   :init
+   (ivy-rich-mode 1)
+   (setq ivy-rich-parse-remote-buffer nil))
 
-   (use-package counsel-tramp)
 
  #+end_src
 
@@ -468,73 +485,22 @@ To be added
 
 #+RESULTS:
 : t
-** Workspaces
-
+** Projectile
 #+begin_src emacs-lisp
-  (defun my/startup-window-layout ()
-    (split-window-horizontally)
-    (other-window 1)
-    (split-window-below)
-    (other-window 2)
-    )
-
-  (defun my/config-startup-perspective ()
-    (persp-switch "project")
-    (my/startup-window-layout)
-    (switch-to-buffer "*dashboard*")
-    (other-window 1)
-    (shell (generate-new-buffer-name "*shell*"))
-    (other-window 1)
-    (switch-to-buffer "*scratch* (project)")
-    )
-
-  (use-package perspective
-    :custom
-    (persp-mode-prefix-key (kbd "C-c x"))
-    :init
-    (persp-mode 1)
-    ;; (my/config-startup-perspective)
-    )
-
-  (use-package burly)
+(use-package projectile
+  :init
+  (setq projectile-project-search-path '("~/" "~/work"))
+  :config
+  (setq projectile-indexing-method 'native)
+  (setq projectile-completion-system 'ivy)
+  (setq projectile-enable-caching t)
+;;  (setq projectile-switch-project-action #'projectile-dired)
+  (projectile-mode +1)
+)
 #+end_src
 
 #+RESULTS:
 : t
-
-** Projectile
-#+begin_src emacs-lisp
-
-  (use-package projectile
-    :init
-    (setq projectile-project-search-path '("~/" "~/work/kwali/"))
-    :config
-    (defun my/switch-project-action ()
-      (persp-switch (projectile-project-name))
-      )
-    (setq projectile-completion-system 'ivy)
-    (setq projectile-switch-project-action #'my/switch-project-action)
-    (projectile-mode)
-  )
-#+end_src
-
-#+RESULTS:
-:
-** Casual
-#+begin_src emacs-lisp
-
-(use-package re-builder
-  :defer t)
-
-(use-package casual-re-builder
-  :after (re-builder))
-
-(use-package  casual-dired)
-
-(use-package casual-info)
-
-(use-package casual-bookmarks)
-#+end_src
 * Editing
 ** Avy
 #+begin_src emacs-lisp
@@ -555,70 +521,40 @@ To be added
 
 #+RESULTS:
 
-** Multiple cursors
-#+begin_src emacs-lisp
-  (use-package phi-search)
-  (use-package multiple-cursors)  
-#+end_src
-
-#+RESULTS:
-
 * Tramp
 #+begin_src emacs-lisp
-  (with-eval-after-load 'tramp
-    (add-to-list 'tramp-methods
-                 '("sshxa"
-                   (tramp-login-program "ssh")
-                   (tramp-login-args
-                    (("-l" "%u")
-                     ("-p" "%p")
-                     ("%c")
-                     ("-e" "none")
-                     ("-t" "-t")
-                     ("-o" "RemoteCommand=\"%l\"")
-                     ("-A")
-                     ("%h")))
-                   (tramp-async-args
-                    (("-q")))
-		   (tramp-remote-shell         "/bin/sh")
-                   (tramp-remote-shell-login
-                    ("-l"))
-                   (tramp-remote-shell-args
-                    ("-c")))
-                 )
-    (tramp-set-completion-function "sshxa" tramp-completion-function-alist-ssh))
+(use-package docker-tramp)
 
-    (use-package docker-tramp)
+(defun remote-shell--dummy1 (path)
+    (interactive "sPath:")
+    (let ((default-directory path) (current-prefix-arg '(4)))
+      (call-interactively 'shell)))
 
-      (defun remote-shell--dummy1 (path)
-          (interactive "sPath:")
-          (let ((default-directory path) (current-prefix-arg '(4)))
-            (call-interactively 'shell)))
+(defun remote-shell--dummy2 (path)
+    (interactive (list (read-directory-name "Default directory: " nil nil t default-directory)))
+    (let ((default-directory path) (current-prefix-arg '(4)))
+      (call-interactively 'shell)))
 
-      (defun remote-shell--dummy2 (path)
-          (interactive (list (read-directory-name "Default directory: " nil nil t default-directory)))
-          (let ((default-directory path) (current-prefix-arg '(4)))
-            (call-interactively 'shell)))
+(load-file (concat (car (directory-files "/home/juanpablo/.emacs.d/elpa/" t "counsel*" nil)) "/counsel.el"))
+(defun open-shell-new-buffer (path)
+  (let ((default-directory path) (current-prefix-arg '(4)))
+    (call-interactively 'shell)
+    )
+  )
+(defun remote-shell ()
+  (interactive)
+  (ivy-read "Open shell in path:" #'read-file-name-internal
+            :matcher #'counsel--find-file-matcher
+            :initial-input nil
+            :action #'open-shell-new-buffer
+            :preselect (counsel--preselect-file)
+            :require-match 'confirm-after-completion
+            :history 'file-name-history
+            :keymap counsel-find-file-map
+            :caller #'remote-shell)
+  )
 
-      ;; (load-file (concat (car (directory-files "/home/juanpablo/.emacs.d/elpa/" t "counsel*" nil)) "/counsel.el"))
-      (load-file "/home/juanpablo/.emacs.d/straight/build/counsel/counsel.el")
-      (defun open-shell-new-buffer (path)
-        (let ((default-directory path) (current-prefix-arg '(4)))
-          (call-interactively 'shell)
-          )
-        )
-      (defun remote-shell ()
-        (interactive)
-        (ivy-read "Open shell in path:" #'read-file-name-internal
-                  :matcher #'counsel--find-file-matcher
-                  :initial-input nil
-                  :action #'open-shell-new-buffer
-                  :preselect (counsel--preselect-file)
-                  :require-match 'confirm-after-completion
-                  :history 'file-name-history
-                  :keymap counsel-find-file-map
-                  :caller #'remote-shell)
-        )
+
 #+end_src
 
 #+RESULTS:
@@ -666,7 +602,7 @@ To be added
   :hook (org-mode . efs/org-mode-setup)
   :config
   (setq org-ellipsis " ▾")
-;;  (efs/org-font-setup)
+  (efs/org-font-setup)
   (org-babel-do-load-languages
     'org-babel-load-languages
     '((emacs-lisp . t)
@@ -696,6 +632,67 @@ To be added
 #+end_src
 
 #+RESULTS:
+* Awesome Packages
+** Magit
+#+begin_src emacs-lisp
+(use-package magit)
+#+end_src
+** EAF
+#+begin_src emacs-lisp
+(use-package eaf
+  :load-path "~/.emacs.d/site-lisp/emacs-application-framework" ; Set to "/usr/share/emacs/site-lisp/eaf" if installed from AUR
+  :custom
+  (eaf-browser-continue-where-left-off t)
+  :config
+  (setq eaf-browser-enable-adblocker t)
+  (require 'eaf-browser)
+)
+
+(defun my/eaf-open-browser (&optional args)
+  (interactive "P")
+  (progn
+    (split-window-right)
+    (other-window 1)
+  )
+  (if (equal current-prefix-arg '(4))
+    (call-interactively #'eaf-open-browser)
+    (eaf-open (eaf-wrap-url "www.google.com") "browser" args))
+)
+#+end_src
+
+
+(equal current-prefix-arg nil)
+** Nyxt
+
+#+begin_src emacs-lisp :tangle no
+    (use-package emacs-with-nyxt
+      :ensure nil
+      :load-path "~/.emacs.d/site-lisp/emacs-with-nyxt"
+      )
+
+  (use-package slime
+      :config
+      (setq slime-lisp-implementations 
+        '(
+          ;; (clisp ("/usr/bin/clisp"))
+          (sbcl ("/usr/bin/sbcl"))
+        )
+      )
+    )
+
+    ;; (use-package sly
+    ;;   :config
+    ;;   (setq sly-lisp-implementations 
+    ;;     '((clisp ("/usr/bin/clisp"))
+    ;;       ;; (sbcl ("/usr/bin/sbcl"))
+    ;;     )
+    ;;   )
+    ;; )
+#+end_src
+
+#+RESULTS:
+: t
+
 * IDE
 ** Shells
 #+begin_src emacs-lisp
@@ -710,57 +707,34 @@ To be added
 (use-package eterm-256color
   :hook (term-mode . eterm-256color-mode))
 
-;;(use-package vterm
-;;    )
+(use-package vterm
+    )
 #+end_src
 
 #+RESULTS:
 : t
-** Templates
-#+begin_src emacs-lisp
-  (use-package yasnippet
-    :hook
-    (prog-mode . yas-minor-mode)
-    (shell-mode . yas-minor-mode)
-    :init
-    (setq yas-snippet-dirs
-          '("~/.emacs.d/snippets") ;; personal snippets
-          )
-    :config
-    (yas-reload-all)
-    )
-
-  (use-package ivy-yasnippet)
-
-  (use-package auto-yasnippet)
-
-#+end_src
-
-#+RESULTS:
-
 ** In-buffer Completion
 
 #+begin_src emacs-lisp
       (use-package corfu
 
       ;; Optional customizations
+      ;; :custom
+      ;; (corfu-cycle t)                ;; Enable cycling for`corfu-next/previous'
         :custom
-        (corfu-cycle t)                ;; Enable cycling for`corfu-next/previous'
-        (corfu-auto t)			  ;; Enable auto completion
+        ;; (corfu-auto t)			  ;; Enable auto completion
         (corfu-separator ?\s)          ;; Orderless field separator
         (corfu-quit-at-boundary 'separator)   ;; Never quit at completion boundary
         (corfu-quit-no-match 'separator)      ;; Never quit, even if there is no match
         (corfu-preview-current 'insert)    ;; Disable current candidate preview
         ;; (corfu-preselect-first nil)    ;; Disable candidate preselection
         ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
-        ;;(corfu-echo-documentation nil) ;; Disable documentation in the echo area
+        (corfu-echo-documentation nil) ;; Disable documentation in the echo area
       ;; (corfu-scroll-margin 5)        ;; Use scroll margin
 
+        (corfu-auto t)
         (corfu-auto-prefix 2)
-        (corfu-auto-delay 0.0)
-
-        :init
-        (global-corfu-mode)
+        (corfu-auto-delay 0.25)
       ;; You may want to enable Corfu only for certain modes.
       ;; :hook ((prog-mode . corfu-mode)
       ;;        (shell-mode . corfu-mode)
@@ -768,7 +742,8 @@ To be added
 
       ;; Recommended: Enable Corfu globally.
       ;; This is recommended since dabbrev can be used globally (M-/).
-      )
+      :init
+      (corfu-global-mode))
 
     ;; Use dabbrev with Corfu!
     (use-package dabbrev
@@ -781,26 +756,27 @@ To be added
       (use-package cape
         ;; Bind dedicated completion commands
         ;; Alternative prefix keys: C-c p, M-p, M-+, ...
-        :bind (;; ("C-c p p" . completion-at-point) capf
-               ;; ("C-c p t" . complete-tag)        ;; etags
-               ;; ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
-               ;; ("C-c p f" . cape-file)
-               ;; ("C-c p k" . cape-keyword)
-               ;; ("C-c p s" . cape-symbol)
-               ;; ("C-c p a" . cape-abbrev)
-               ;; ("C-c p i" . cape-ispell)
-               ;; ("C-c p l" . cape-line)
-               ;; ("C-c p w" . cape-dict)
-               ;; ("C-c p \\" . cape-tex)
-               ;; ("C-c p _" . cape-tex)
-               ;; ("C-c p ^" . cape-tex)
-               ;; ("C-c p &" . cape-sgml)
-               ;; ("C-c p r" . cape-rfc1345)
-               )
+        :bind (("C-c p p" . completion-at-point) ;; capf
+               ("C-c p t" . complete-tag)        ;; etags
+               ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
+               ("C-c p f" . cape-file)
+               ("C-c p k" . cape-keyword)
+               ("C-c p s" . cape-symbol)
+               ("C-c p a" . cape-abbrev)
+               ("C-c p i" . cape-ispell)
+               ("C-c p l" . cape-line)
+               ("C-c p w" . cape-dict)
+               ("C-c p \\" . cape-tex)
+               ("C-c p _" . cape-tex)
+               ("C-c p ^" . cape-tex)
+               ("C-c p &" . cape-sgml)
+               ("C-c p r" . cape-rfc1345))
         :init
         ;; Add `completion-at-point-functions', used by `completion-at-point'.
         (add-to-list 'completion-at-point-functions #'cape-file)
         (add-to-list 'completion-at-point-functions #'cape-dabbrev)
+        (add-to-list 'completion-at-point-functions
+                     (cape-company-to-capf #'elpy-company-backend))
         ;;(add-to-list 'completion-at-point-functions #'cape-keyword)
         ;;(add-to-list 'completion-at-point-functions #'cape-tex)
         ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
@@ -836,21 +812,20 @@ To be added
     ;; function unless you use something similar
     (add-hook 'kb/themes-hooks #'(lambda () (interactive) (kind-icon-reset-cache))))
 
-  ;; (use-package corfu-doc
-  ;; ;; NOTE 2022-02-05: At the time of writing, `corfu-doc' is not yet on melpa
-  ;; :straight (corfu-doc :type git :host github :repo "galeo/corfu-doc")
-  ;; :after corfu
-  ;; :hook (corfu-mode . corfu-doc-mode)
-  ;; :custom
-  ;; (corfu-doc-delay 0.5)
-  ;; (corfu-doc-max-width 70)
-  ;; (corfu-doc-max-height 20)
+  (use-package corfu-doc
+  ;; NOTE 2022-02-05: At the time of writing, `corfu-doc' is not yet on melpa
+  :straight (corfu-doc :type git :host github :repo "galeo/corfu-doc")
+  :after corfu
+  :hook (corfu-mode . corfu-doc-mode)
+  :custom
+  (corfu-doc-delay 0.5)
+  (corfu-doc-max-width 70)
+  (corfu-doc-max-height 20)
 
   ;; NOTE 2022-02-05: I've also set this in the `corfu' use-package to be
   ;; extra-safe that this is set when corfu-doc is loaded. I do not want
   ;; documentation shown in both the echo area and in the `corfu-doc' popup.
-  ;(corfu-echo-documentation nil)
-
+  (corfu-echo-documentation nil))
 #+end_src
 
 #+RESULTS:
@@ -867,130 +842,17 @@ To be added
 
 #+RESULTS:
 | flycheck-mode |
-** LSP
-
-#+begin_src emacs-lisp
-    (defun my/lsp-mode-setup ()
-      (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-      (lsp-headerline-breadcrumb-mode))
-
-    (defun my/lsp-mode-setup-completion ()
-      (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-            '(flex))) ;; Configure flex
-
-    (use-package lsp-mode
-      :custom
-      (lsp-completion-provider :none) ;; we use Corfu!
-      :commands (lsp lsp-deferred)
-      :hook
-      (lsp-mode . my/lsp-mode-setup)
-      (lsp-completion-mode . my/lsp-mode-setup-completion)
-      :init
-      (setq lsp-keymap-prefix "C-c l")
-      (add-to-list 'exec-path "/home/juanpablo/miniconda3/bin")
-      :config
-      (lsp-enable-which-key-integration t))
-
-    (use-package lsp-ui
-      :hook (lsp-mode . lsp-ui-mode)
-      :custom
-      (lsp-ui-doc-position 'bottom)
-      (lsp-ui-imenu-buffer-position 'left)
-      )
-
-
-    (use-package lsp-treemacs
-      :after lsp)
-
-    (use-package lsp-ivy)
-
-    (use-package dap-mode
-    ;; Uncomment the config below if you want all UI panes to be hidden by default!
-    ;; :custom
-    ;; (lsp-enable-dap-auto-configure nil)
-    ;; :config
-    ;; (dap-ui-mode 1)
-
-    :config
-    ;; Set up Node debugging
-    (require 'dap-node)
-    (dap-node-setup) ;; Automatically installs Node debug adapter if needed
-    )
-    ;; ;; Bind `C-c l d` to `dap-hydra` for easy access
-    ;; (general-define-key
-    ;;   :keymaps 'lsp-mode-map
-    ;;   :prefix lsp-keymap-prefix
-    ;;   "d" '(dap-hydra t :wk "debugger")))
-
-  (use-package evil-nerd-commenter
-    :bind ("M-/" . evilnc-comment-or-uncomment-lines))
-#+end_src
-
-#+RESULTS:
-: evilnc-comment-or-uncomment-lines
-
 ** Python
 
 #+begin_src emacs-lisp
-  (use-package python-mode
-    :hook (python-mode . lsp-deferred)
-    :custom
-    (dap-python-debugger 'debugpy)
-    :config
-    (require 'dap-python))
-
-  (use-package sphinx-doc
-    :hook (python-mode . sphinx-doc-mode)
-    )
-#+end_src
-
-#+RESULTS:
-| sphinx-doc-mode | code-cells-mode-maybe | lsp-deferred | er/add-python-mode-expansions | doom-modeline-env-setup-python |
-** Jupyter
-#+begin_src emacs-lisp
-  (use-package code-cells
+    (use-package elpy
+    
     :init
-    (add-hook 'python-mode-hook 'code-cells-mode-maybe)
-    :config
-    (with-eval-after-load 'code-cells
-      (let ((map code-cells-mode-map))
-        (define-key map (kbd "C-c j e") 'code-cells-eval)
-        (define-key map (kbd "C-c j b") 'code-cells-backward-cell)
-        (define-key map (kbd "C-c j f") 'code-cells-forward-cell)
-        (define-key map (kbd "C-c j B") 'code-cells-move-cell-up)
-        (define-key map (kbd "C-c j F") 'code-cells-move-cell-down)
-        (define-key map (kbd "C-c j ;") 'code-cells-comment-or-uncomment)
-        (define-key map (kbd "C-c j @") 'code-cells-mark-cell)
-
-        ;; Overriding other minor mode bindings requires some insistence...
-        (define-key map [remap jupyter-eval-line-or-region] 'code-cells-eval)))
-    )
+    (elpy-enable)
+    (setq elpy-rpc-backend "jedi"))
 #+end_src
 
 #+RESULTS:
-: t
-
-#+begin_src emacs-lisp
-  (use-package jupyter)
-
-  (use-package pyvenv)
-#+end_src
-
-#+RESULTS:
-
-** ChatGPT
-#+begin_src emacs-lisp
-    (use-package chatgpt
-      :straight (:host github :repo "joshcho/ChatGPT.el" :files ("dist" "*.el"))
-      :init
-      (require 'python)
-      (setq chatgpt-repo-path "~/.emacs.d/straight/repos/ChatGPT.el/")
-      :bind ("C-c q" . chatgpt-query)
-      )
-#+end_src
-
-#+RESULTS:
-: chatgpt-query
 
 * Writing
 ** Mail
@@ -1082,7 +944,7 @@ To be added
 
 #+RESULTS:
 : org-define-error
-#+begin_src emacs-lisp :tangle no
+#+begin_src emacs-lisp
 (use-package edit-server
   :commands edit-server-start
   :init (if after-init-time
@@ -1102,249 +964,3 @@ To be added
 
 #+RESULTS:
 : t
-* Great Packages
-** Magit
-#+begin_src emacs-lisp
-       (use-package magit)
-
-       (use-package magit-delta
-         :hook (magit-mode . magit-delta-mode)
-         )
-
-
-  (defun my/toggle-magit-delta ()
-    (interactive)
-    (magit-delta-mode
-     (if magit-delta-mode
-         -1
-       1))
-    (magit-refresh))
-
-       (defun my/magit--with-difftastic (buffer command)
-       "Run COMMAND with GIT_EXTERNAL_DIFF=difft then show result in BUFFER."
-       (let ((process-environment
-              (cons (concat "TMP=~/tmp GIT_EXTERNAL_DIFF=difftastic --width="
-                            (number-to-string (frame-width)))
-                    process-environment)))
-         ;; Clear the result buffer (we might regenerate a diff, e.g., for
-         ;; the current changes in our working directory).
-         (with-current-buffer buffer
-           (setq buffer-read-only nil)
-           (erase-buffer))
-         ;; Now spawn a process calling the git COMMAND.
-         (make-process
-          :name (buffer-name buffer)
-          :buffer buffer
-          :command command
-          ;; Don't query for running processes when emacs is quit.
-          :noquery t
-          ;; Show the result buffer once the process has finished.
-          :sentinel (lambda (proc event)
-                      (when (eq (process-status proc) 'exit)
-                        (with-current-buffer (process-buffer proc)
-                          (goto-char (point-min))
-                          (ansi-color-apply-on-region (point-min) (point-max))
-                          (setq buffer-read-only t)
-                          (view-mode)
-                          (end-of-line)
-                          ;; difftastic diffs are usually 2-column side-by-side,
-                          ;; so ensure our window is wide enough.
-                          (let ((width (current-column)))
-                            (while (zerop (forward-line 1))
-                              (end-of-line)
-                              (setq width (max (current-column) width)))
-                            ;; Add column size of fringes
-                            (setq width (+ width
-                                           (fringe-columns 'left)
-                                           (fringe-columns 'right)))
-                            (goto-char (point-min))
-                            (pop-to-buffer
-                             (current-buffer)
-                             `(;; If the buffer is that wide that splitting the frame in
-                               ;; two side-by-side windows would result in less than
-                               ;; 80 columns left, ensure it's shown at the bottom.
-                               ,(when (> 80 (- (frame-width) width))
-                                  #'display-buffer-at-bottom)
-                               (window-width
-                                . ,(min width (frame-width))))))))))))
-
-
-       (defun my/magit-show-with-difftastic (rev)
-       "Show the result of \"git show REV\" with GIT_EXTERNAL_DIFF=difft."
-       (interactive
-        (list (or
-               ;; If REV is given, just use it.
-               (when (boundp 'rev) rev)
-               ;; If not invoked with prefix arg, try to guess the REV from
-               ;; point's position.
-               (and (not current-prefix-arg)
-                    (or (magit-thing-at-point 'git-revision t)
-                        (magit-branch-or-commit-at-point)))
-               ;; Otherwise, query the user.
-               (magit-read-branch-or-commit "Revision"))))
-       (if (not rev)
-           (error "No revision specified")
-         (my/magit--with-difftastic
-          (get-buffer-create (concat "*git show difftastic " rev "*"))
-          (list "git" "--no-pager" "show" "--ext-diff" rev))))
-
-      (defun my/magit-diff-with-difftastic (arg)
-       "Show the result of \"git diff ARG\" with GIT_EXTERNAL_DIFF=difftastic."
-       (interactive
-        (list (or
-               ;; If RANGE is given, just use it.
-               (when (boundp 'range) range)
-               ;; If prefix arg is given, query the user.
-               (and current-prefix-arg
-                    (magit-diff-read-range-or-commit "Range"))
-               ;; Otherwise, auto-guess based on position of point, e.g., based on
-               ;; if we are in the Staged or Unstaged section.
-               (pcase (magit-diff--dwim)
-                 ('unmerged (error "unmerged is not yet implemented"))
-                 ('unstaged nil)
-                 ('staged "--cached")
-                 (`(stash . ,value) (error "stash is not yet implemented"))
-                 (`(commit . ,value) (format "%s^..%s" value value))
-                 ((and range (pred stringp)) range)
-                 (_ (magit-diff-read-range-or-commit "Range/Commit"))))))
-       (let ((name (concat "*git diff difftastic"
-                           (if arg (concat " " arg) "")
-                           "*")))
-         (my/magit--with-difftastic
-          (get-buffer-create name)
-          `("git" "--no-pager" "diff" "--ext-diff" ,@(when arg (list arg))))))
-
-
-      (defun my/recolor-difftastic ()
-      (let ((ovs (overlays-in (point-min) (point-max))))
-        (dolist (ov ovs)
-          (let ((face (overlay-get ov 'face)))
-            (when (and (not (null face)) (listp face))
-              (when (plist-get face :foreground)
-                (plist-put face :foreground (my/get-remapped-difftastic-colour (plist-get face :foreground))))
-              (when-let ((existing (cl-find :foreground face :key (lambda (x) (if (consp x) (car x) nil)))))
-                (setf face
-                      (cl-subst `(:foreground ,(my/get-remapped-difftastic-colour (plist-get existing :foreground)))
-                                :foreground
-                                face
-                                :key (lambda (x) (if (consp x) (car x) nil)))))
-              (overlay-put ov 'face face))))))
-
-    (defun my/get-remapped-difftastic-colour (original)
-      (alist-get original +my/difftastic-colour-remapping+ nil nil 'string=))
-
-    (defconst +my/difftastic-colour-remapping+
-      `(("red2" . "#a8353e") ;; https://oklch.com/#50,0.15,20,100
-        ("green2" . "#107823")
-        ("yellow2" . "#2f3b97")))
-
-    (unless (boundp 'my/added-magit-diff-suffixes)
-      (transient-append-suffix 'magit-diff '(-1 -1)
-      [("l" "Toggle magit-delta" my/toggle-magit-delta)
-       ("D" "Difftastic Diff (dwim)" my/magit-diff-with-difftastic)
-       ("S" "Difftastic Show" my/magit-show-with-difftastic)]))
-
-  (setf my/added-magit-diff-suffixes t)
-
-
-#+end_src
-
-#+RESULTS:
-: t
-
-** EAF
-  (use-package eaf
-    :straight (eaf
-               :type git
-               :host github
-               :repo "emacs-eaf/emacs-application-framework"           
-               :files ("*.el" "*.py" "core" "app" "*.json")
-               :includes (eaf-browser)
-               :pre-build (("python" "install-eaf.py" "--install" "browser"))
-               )
-    :custom
-    (eaf-browser-continue-where-left-off t)
-    :config
-    (setq eaf-browser-enable-adblocker t)
-  )
-
-  (use-package eaf-browser)
-
-  (defun my/eaf-open-browser (&optional args)
-    (interactive "P")
-    (progn
-      (split-window-right)
-      (other-window 1)
-    )
-    (if (equal current-prefix-arg '(4))
-      (call-interactively #'eaf-open-browser)
-      (eaf-open (eaf-wrap-url "www.google.com") "browser" args))
-  )
-
-(equal current-prefix-arg nil)
-** Nyxt
-
-#+begin_src emacs-lisp :tangle no
-    (use-package emacs-with-nyxt
-      :ensure nil
-      :load-path "~/.emacs.d/site-lisp/emacs-with-nyxt"
-      )
-
-  (use-package slime
-      :config
-      (setq slime-lisp-implementations 
-        '(
-          ;; (clisp ("/usr/bin/clisp"))
-          (sbcl ("/usr/bin/sbcl"))
-        )
-      )
-    )
-
-    ;; (use-package sly
-    ;;   :config
-    ;;   (setq sly-lisp-implementations 
-    ;;     '((clisp ("/usr/bin/clisp"))
-    ;;       ;; (sbcl ("/usr/bin/sbcl"))
-    ;;     )
-    ;;   )
-    ;; )
-#+end_src
-
-#+RESULTS:
-: t
-** Restclient
-
-#+begin_src emacs-lisp
-      (use-package restclient
-        :mode (("\\.http\\'" . restclient-mode))
-        )
-#+end_src
-
-#+RESULTS:
-
-** Elfeed
-
-#+begin_src emacs-lisp
-  (use-package elfeed
-    :config
-    (setq elfeed-feeds
-      '("https://planet.emacslife.com/atom.xml")
-      )
-    )
-
-#+end_src
-
-#+RESULTS:
-
-** IRC
-
-#+begin_src emacs-lisp
-  (setq erc-server "irc.libera.chat"
-    erc-nick "juanpamf"    ; Change this!
-    erc-user-full-name "Juan Pablo Morales"  ; And this!
-    erc-track-shorten-start 8
-    erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters" "#emacs"))
-    erc-kill-buffer-on-part t
-          erc-auto-query 'bury)
-
-#+end_src
