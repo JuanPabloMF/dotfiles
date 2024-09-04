@@ -7,41 +7,9 @@
 ** TODO leave anchors you can quickly move to (like C-x C-x)->see registers
 ** DONE save history
 * Base Config
-** Native Comp
-#+begin_src emacs-lisp
-  ;; (when (and (fboundp 'native-comp-available-p)
-  ;;          (native-comp-available-p))
-
-  ;;   (progn
-  ;;     (setq native-comp-async-report-warnings-errors nil)
-  ;;     (setq comp-deferred-compilation t)
-  ;;     (add-to-list 'native-comp-eln-load-path (expand-file-name "eln-cache/" user-emacs-directory))
-  ;;     (setq package-native-compile t)
-  ;;     )
-  ;;   )
-#+end_src
-
 ** Package Management
 
 #+begin_src emacs-lisp
-    ;; Initialize package sources
-    ;; (require 'package)
-
-    ;; (setq package-archives '(("melpa" . "https://melpa.org/packages/")
-    ;;                          ("org" . "https://orgmode.org/elpa/")
-    ;;                          ("elpa" . "https://elpa.gnu.org/packages/")))
-
-    ;; (package-initialize)
-    ;; (unless package-archive-contents
-    ;;   (package-refresh-contents))
-
-    ;; ;; Initialize use-package on non-Linux platforms
-    ;; (unless (package-installed-p 'use-package)
-    ;;   (package-install 'use-package))
-
-    ;; (require 'use-package)
-    ;; (setq use-package-always-ensure t)
-
     (defvar bootstrap-version)
     (let ((bootstrap-file
            (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
@@ -120,8 +88,6 @@
  ;; Set frame transparency
  (set-frame-parameter (selected-frame) 'alpha 95)
  (add-to-list 'default-frame-alist `(alpha . ,95))
- ;;(set-frame-parameter (selected-frame) 'fullscreen 'maximized)
- ;;(add-to-list 'default-frame-alist '(fullscreen . maximized))
 
  ;; Disable line numbers for some modes
  (dolist (mode '(org-mode-hook
@@ -131,18 +97,6 @@
                  eshell-mode-hook))
    (add-hook mode (lambda () (display-line-numbers-mode 0))))
  #+end_src
-
-*** Fonts
-
-#+begin_src emacs-lisp
-  ;; (set-face-attribute 'default nil :font "Iosevka" :height 140)
-
-  ;; ;; Set the fixed pitch face
-  ;; (set-face-attribute 'fixed-pitch nil :font "Iosevka" :height 140)
-
-  ;; ;; Set the variable pitch face
-  ;; (set-face-attribute 'variable-pitch nil :font "Iosevka Aile" :height 160 :weight 'regular)
-#+end_src
 
 *** Dashboard
 #+begin_src emacs-lisp
@@ -823,18 +777,12 @@ To be added
 (use-package term
   :config
   (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
-  ;;(setq explicit-zsh-args '())         ;; Use 'explicit-<shell>-args for shell-specific args
 
   ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
   (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
 
 (use-package eterm-256color
   :hook (term-mode . eterm-256color-mode))
-
-;;(use-package vterm
-;;    )
-#+end_src
-
 #+RESULTS:
 : t
 ** Templates
@@ -872,11 +820,6 @@ To be added
         (corfu-quit-at-boundary 'separator)   ;; Never quit at completion boundary
         (corfu-quit-no-match 'separator)      ;; Never quit, even if there is no match
         (corfu-preview-current 'insert)    ;; Disable current candidate preview
-        ;; (corfu-preselect-first nil)    ;; Disable candidate preselection
-        ;; (corfu-on-exact-match nil)     ;; Configure handling of exact matches
-        ;;(corfu-echo-documentation nil) ;; Disable documentation in the echo area
-      ;; (corfu-scroll-margin 5)        ;; Use scroll margin
-
         (corfu-auto-prefix 2)
         (corfu-auto-delay 0.0)
 
@@ -902,34 +845,10 @@ To be added
       (use-package cape
         ;; Bind dedicated completion commands
         ;; Alternative prefix keys: C-c p, M-p, M-+, ...
-        :bind (;; ("C-c p p" . completion-at-point) capf
-               ;; ("C-c p t" . complete-tag)        ;; etags
-               ;; ("C-c p d" . cape-dabbrev)        ;; or dabbrev-completion
-               ;; ("C-c p f" . cape-file)
-               ;; ("C-c p k" . cape-keyword)
-               ;; ("C-c p s" . cape-symbol)
-               ;; ("C-c p a" . cape-abbrev)
-               ;; ("C-c p i" . cape-ispell)
-               ;; ("C-c p l" . cape-line)
-               ;; ("C-c p w" . cape-dict)
-               ;; ("C-c p \\" . cape-tex)
-               ;; ("C-c p _" . cape-tex)
-               ;; ("C-c p ^" . cape-tex)
-               ;; ("C-c p &" . cape-sgml)
-               ;; ("C-c p r" . cape-rfc1345)
-               )
         :init
         ;; Add `completion-at-point-functions', used by `completion-at-point'.
         (add-to-list 'completion-at-point-functions #'cape-file)
         (add-to-list 'completion-at-point-functions #'cape-dabbrev)
-        ;;(add-to-list 'completion-at-point-functions #'cape-keyword)
-        ;;(add-to-list 'completion-at-point-functions #'cape-tex)
-        ;;(add-to-list 'completion-at-point-functions #'cape-sgml)
-        ;;(add-to-list 'completion-at-point-functions #'cape-      ;;(add-to-list 'completion-at-point-functions #'cape-abbrev)
-        ;;(add-to-list 'completion-at-point-functions #'cape-ispell)
-        ;;(add-to-list 'completion-at-point-functions #'cape-dict)
-        ;;(add-to-list 'completion-at-point-functions #'cape-symbol)
-        ;;(add-to-list 'completion-at-point-functions #'cape-line)
       )
 
   (use-package kind-icon
@@ -956,21 +875,6 @@ To be added
     ;; since I have a light theme and dark theme I switch between. This has no
     ;; function unless you use something similar
     (add-hook 'kb/themes-hooks #'(lambda () (interactive) (kind-icon-reset-cache))))
-
-  ;; (use-package corfu-doc
-  ;; ;; NOTE 2022-02-05: At the time of writing, `corfu-doc' is not yet on melpa
-  ;; :straight (corfu-doc :type git :host github :repo "galeo/corfu-doc")
-  ;; :after corfu
-  ;; :hook (corfu-mode . corfu-doc-mode)
-  ;; :custom
-  ;; (corfu-doc-delay 0.5)
-  ;; (corfu-doc-max-width 70)
-  ;; (corfu-doc-max-height 20)
-
-  ;; NOTE 2022-02-05: I've also set this in the `corfu' use-package to be
-  ;; extra-safe that this is set when corfu-doc is loaded. I do not want
-  ;; documentation shown in both the echo area and in the `corfu-doc' popup.
-  ;(corfu-echo-documentation nil)
 
 #+end_src
 
@@ -1421,14 +1325,6 @@ To be added
       )
     )
 
-    ;; (use-package sly
-    ;;   :config
-    ;;   (setq sly-lisp-implementations 
-    ;;     '((clisp ("/usr/bin/clisp"))
-    ;;       ;; (sbcl ("/usr/bin/sbcl"))
-    ;;     )
-    ;;   )
-    ;; )
 #+end_src
 
 #+RESULTS:
