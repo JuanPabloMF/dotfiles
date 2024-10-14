@@ -9,48 +9,31 @@
 * Base Config
 ** Package Management
 
+
 #+begin_src emacs-lisp
-    (defvar bootstrap-version)
-    (let ((bootstrap-file
-           (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-          (bootstrap-version 5))
-      (unless (file-exists-p bootstrap-file)
-        (with-current-buffer
-            (url-retrieve-synchronously
-             "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-             'silent 'inhibit-cookies)
-          (goto-char (point-max))
-          (eval-print-last-sexp)))
-      (load bootstrap-file nil 'nomessage))
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+        (bootstrap-version 5))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+          (url-retrieve-synchronously
+           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+           'silent 'inhibit-cookies)
+        (goto-char (point-max))
+        (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
 
 
-    (setq package-enable-at-startup nil)
-    (add-to-list 'load-path "~/.emacs.d/site-lisp/")
-    (setq use-package-always-ensure t)
-    (straight-use-package 'use-package)
-    (setq straight-use-package-by-default t)
-    (straight-use-package 'org)
+  (setq package-enable-at-startup nil)
+  (add-to-list 'load-path "~/.emacs.d/site-lisp/")
+  (setq use-package-always-ensure t)
+  (straight-use-package 'use-package)
+  (setq straight-use-package-by-default t)
 #+end_src
 
 #+RESULTS:
 : t
-
-** Customize
-#+begin_src emacs-lisp
-
-  (use-package no-littering
-    :init
-     (setq no-littering-etc-directory
-	(expand-file-name "config/" user-emacs-directory))
-     (setq no-littering-var-directory
-	   (expand-file-name "data/" user-emacs-directory))
-    )
-
-  ;; no-littering doesn't set this by default so we must place
-  ;; auto save files in the same path as it uses for sessions
-  (setq auto-save-file-name-transforms
-	`((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
-#+end_src
 
 ** UI
 *** Theme
@@ -155,8 +138,9 @@
 
   ;; no-littering doesn't set this by default so we must place
   ;; auto save files in the same path as it uses for sessions
-  (setq auto-save-file-name-transforms
-	`((".*" ,(no-littering-expand-var-file-name "auto-save/") t)))
+  ;; (setq auto-save-file-name-transforms
+  ;;       `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))
+  ;; )
 #+end_src
 *** LSP optimization settings
 #+begin_src emacs-lisp
@@ -171,7 +155,7 @@
   `(progn ,@(mapcar (lambda (arglist)
 		      `(general-def ,@arglist :package 'general))
 		    args)))
-
+(use-package s)
 (defmacro f-string (fmt)
   "Like `s-format' but with format fields in it.
 FMT is a string to be expanded against the current lexical
@@ -193,6 +177,8 @@ enjoy using a lot.
 
     `(s-format ,fmt 'aget (list ,@agetter))))
 #+end_src
+** Guix porting
+
 ** Functions
 #+begin_src emacs-lisp
   (defun my/load-default-init-file ()
@@ -381,88 +367,88 @@ enjoy using a lot.
 ** Hydras
 *** Window
 #+begin_src emacs-lisp
-(use-package hydra)
-(use-package pretty-hydra)
-(use-package windmove)
-(use-package transpose-frame)
-(use-package headlong)
-(winner-mode 1)
+  (use-package hydra)
+  (use-package pretty-hydra)
+  (use-package windmove)
+  (use-package transpose-frame)
+  (use-package headlong)
+  (winner-mode 1)
 
-;;shameleslly taken from abo-abo's init files
-(pretty-hydra-define hydra-window (:foreign-keys warn :quit-key "q")
-("Arrange"
- (("v" (lambda ()
-         (interactive)
-         (split-window-right)
-         (windmove-right))
-       "vert")
-  ("x" (lambda ()
-         (interactive)
-         (split-window-below)
-         (windmove-down))
-       "horz")
- ("d" ace-delete-window "del")
- ("o" delete-other-windows "one" :exit t)
- ("s" ace-swap-window "swap") 
- ("t" transpose-frame "transpose" :exit t)
- ("+" balance-windows "balance")
- ("u" (progn (winner-undo) (setq this-command 'winner-undo)) "undo"))
- "Move"
- (("h" windmove-left nil)
-  ("j" windmove-down nil)
-  ("k" windmove-up nil)
-  ("l" windmove-right nil)
-  ("a" ace-window "ace")
-  ("i" ace-maximize-window "ace-one" :exit t)
-  ("b" ido-switch-buffer "buf")
-  ("m" headlong-bookmark-jump "bmk"))
-  )
-)
+  ;;shameleslly taken from abo-abo's init files
+  ;; (pretty-hydra-define hydra-window (:foreign-keys warn :quit-key "q")
+  ;; ("Arrange"
+  ;;  (("v" (lambda ()
+  ;;          (interactive)
+  ;;          (split-window-right)
+  ;;          (windmove-right))
+  ;;        "vert")
+  ;;   ("x" (lambda ()
+  ;;          (interactive)
+  ;;          (split-window-below)
+  ;;          (windmove-down))
+  ;;        "horz")
+  ;;  ("d" ace-delete-window "del")
+  ;;  ("o" delete-other-windows "one" :exit t)
+  ;;  ("s" ace-swap-window "swap") 
+  ;;  ("t" transpose-frame "transpose" :exit t)
+  ;;  ("+" balance-windows "balance")
+  ;;  ("u" (progn (winner-undo) (setq this-command 'winner-undo)) "undo"))
+  ;;  "Move"
+  ;;  (("h" windmove-left nil)
+  ;;   ("j" windmove-down nil)
+  ;;   ("k" windmove-up nil)
+  ;;   ("l" windmove-right nil)
+  ;;   ("a" ace-window "ace")
+  ;;   ("i" ace-maximize-window "ace-one" :exit t)
+  ;;   ("b" ido-switch-buffer "buf")
+  ;;   ("m" headlong-bookmark-jump "bmk"))
+  ;;   )
+  ;; )
 #+end_src
 
 #+RESULTS:
 : hydra-window/body
 *** EAF
 #+begin_src emacs-lisp 
-;; More of a mnemonic hydra than a cluster of keys to be chained like aya keybinds for example.
-(pretty-hydra-define hydra-browser (:foreign-keys warn :quit-key "q")
-("Go to"
- (("o" eaf-py-proxy-insert_or_open_browser "open")
-  ("t" eaf-py-proxy-insert_or_new_blank_page "tab")
-  ("T" eaf-py-proxy-insert_or_recover_prev_close_page "recover"))
- "Move"
- (("j" eaf-py-proxy-insert_or_scroll_up nil)
-  ("k" eaf-py-proxy-insert_or_scroll_down nil)
-  ("h" eaf-py-proxy-insert_or_scroll_left nil)
-  ("l" eaf-py-proxy-insert_or_scroll_right nil)
-  ("H" eaf-py-proxy-insert_or_history_backward nil)
-  ("L" eaf-py-proxy-insert_or_history_forward nil)
-  ("J" eaf-py-proxy-insert_or_select_left_tab nil)
-  ("K" eaf-py-proxy-insert_or_select_right_tab nil)
-  ("O" eaf-py-proxy-insert_or_open_link_new_buffer_other_window nil)
-  ("i" eaf-py-proxy-insert_or_focus_input "input")
-  ("e" eaf-py-proxy-insert_or_edit_url "edit-url")
-  ("r" eaf-py-proxy-insert_or_refresh_ "refresh")
-  ("f" eaf-py-proxy-insert_or_open_link "link")
-  ("F" eaf-py-proxy-insert_or_open_link_new_buffer "link-newbuf"))
- "Actions"
- (("a" eaf-py-proxy-atomic_edit "atomic")
-  ("s" eaf-py-proxy-save_page_password "save-password")
-  ("p" eaf-py-proxy-toggle_password_autofill "insert-password")
-  ("," eaf-py-proxy-insert_or_switch_to_reader_mode "reader-mode")
-  (";" eaf-py-proxy-insert_or_translate_page "translate")
-  ("m" eaf-py-proxy-insert_or_toggle_device "tgl-device"))
- "Open"
- (("d" eaf-py-proxy-insert_or_open_downloads_setting "dwlds")
-  ("D"  eaf-py-proxy-open_devtools "dev-tools")
-  ("y"    eaf-py-proxy-insert_or_download_youtube_video "yt-dl"))
- "Visuals"
- (("0" eaf-py-proxy-insert_or_zoom_reset "reset")
-  ("-" eaf-py-proxy-zoom_out "out")
-  ("=" eaf-py-proxy-zoom_in "in")
-  ("3" eaf-py-proxy-insert_or_save_as_screenshot "scrshot"))
-  )
-)
+  ;; More of a mnemonic hydra than a cluster of keys to be chained like aya keybinds for example.
+  ;; (pretty-hydra-define hydra-browser (:foreign-keys warn :quit-key "q")
+  ;; ("Go to"
+  ;;  (("o" eaf-py-proxy-insert_or_open_browser "open")
+  ;;   ("t" eaf-py-proxy-insert_or_new_blank_page "tab")
+  ;;   ("T" eaf-py-proxy-insert_or_recover_prev_close_page "recover"))
+  ;;  "Move"
+  ;;  (("j" eaf-py-proxy-insert_or_scroll_up nil)
+  ;;   ("k" eaf-py-proxy-insert_or_scroll_down nil)
+  ;;   ("h" eaf-py-proxy-insert_or_scroll_left nil)
+  ;;   ("l" eaf-py-proxy-insert_or_scroll_right nil)
+  ;;   ("H" eaf-py-proxy-insert_or_history_backward nil)
+  ;;   ("L" eaf-py-proxy-insert_or_history_forward nil)
+  ;;   ("J" eaf-py-proxy-insert_or_select_left_tab nil)
+  ;;   ("K" eaf-py-proxy-insert_or_select_right_tab nil)
+  ;;   ("O" eaf-py-proxy-insert_or_open_link_new_buffer_other_window nil)
+  ;;   ("i" eaf-py-proxy-insert_or_focus_input "input")
+  ;;   ("e" eaf-py-proxy-insert_or_edit_url "edit-url")
+  ;;   ("r" eaf-py-proxy-insert_or_refresh_ "refresh")
+  ;;   ("f" eaf-py-proxy-insert_or_open_link "link")
+  ;;   ("F" eaf-py-proxy-insert_or_open_link_new_buffer "link-newbuf"))
+  ;;  "Actions"
+  ;;  (("a" eaf-py-proxy-atomic_edit "atomic")
+  ;;   ("s" eaf-py-proxy-save_page_password "save-password")
+  ;;   ("p" eaf-py-proxy-toggle_password_autofill "insert-password")
+  ;;   ("," eaf-py-proxy-insert_or_switch_to_reader_mode "reader-mode")
+  ;;   (";" eaf-py-proxy-insert_or_translate_page "translate")
+  ;;   ("m" eaf-py-proxy-insert_or_toggle_device "tgl-device"))
+  ;;  "Open"
+  ;;  (("d" eaf-py-proxy-insert_or_open_downloads_setting "dwlds")
+  ;;   ("D"  eaf-py-proxy-open_devtools "dev-tools")
+  ;;   ("y"    eaf-py-proxy-insert_or_download_youtube_video "yt-dl"))
+  ;;  "Visuals"
+  ;;  (("0" eaf-py-proxy-insert_or_zoom_reset "reset")
+  ;;   ("-" eaf-py-proxy-zoom_out "out")
+  ;;   ("=" eaf-py-proxy-zoom_in "in")
+  ;;   ("3" eaf-py-proxy-insert_or_save_as_screenshot "scrshot"))
+  ;;   )
+  ;; )
 
 #+end_src
 
@@ -805,6 +791,7 @@ To be added
 
 (use-package eterm-256color
   :hook (term-mode . eterm-256color-mode))
+#+end_src  
 #+RESULTS:
 : t
 ** Templates
