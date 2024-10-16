@@ -1012,19 +1012,47 @@ To be added
 
 #+RESULTS:
 
-** ChatGPT
+** GPTs
 #+begin_src emacs-lisp
-    (use-package chatgpt
-      :straight (:host github :repo "joshcho/ChatGPT.el" :files ("dist" "*.el"))
-      :init
-      (require 'python)
-      (setq chatgpt-repo-path "~/.emacs.d/straight/repos/ChatGPT.el/")
-      :bind ("C-c q" . chatgpt-query)
-      )
+  (use-package elysium
+    :straight (elysium
+  	     :type git
+  	     :host github
+  	     :repo "lanceberge/elysium"
+  	     )
+    :custom
+    ;; Below are the default values
+    (elysium-window-size 0.33) ; The elysium buffer will be 1/3 your screen
+    (elysium-window-style 'vertical)) ; Can be customized to horizontal
+
+  (use-package gptel
+    :custom
+    (gptel-model "claude-3-5-sonnet-20240620")
+    :config
+    (defun get-authinfo-password (machine)
+      "Read the contents of FILE-PATH and return it as a string."
+      (let ((auth-info (auth-source-search :host machine)))
+        (if auth-info
+  	  (let ((secret (plist-get (car auth-info) :secret)))
+  	    (if (functionp secret)
+  		(funcall secret)
+                secret)
+  	    )
+  	(message "No matching auth info found."))))
+    (defun gptel-api-key ()
+      (get-authinfo-password "anthropic.com"))
+    (setq
+     gptel-backend (gptel-make-anthropic "Claude"
+                     :stream t
+                     :key #'gptel-api-key)))
+
+  (use-package smerge-mode
+    :ensure nil
+    :hook
+    (prog-mode . smerge-mode))
+
 #+end_src
 
-#+RESULTS:
-: chatgpt-query
 
 * Writing
 ** Mail
@@ -1374,3 +1402,29 @@ To be added
           erc-auto-query 'bury)
 
 #+end_src
+<<<<<<< HEAD
+=======
+* IRC
+>>>>>>> Claude
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+  (setq erc-server "irc.libera.chat"
+        erc-nick "juanpamf"    ; Change this!
+        erc-user-full-name "Juan Pablo Morales"  ; And this!
+        erc-track-shorten-start 8
+        erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters" "#emacs"))
+        erc-kill-buffer-on-part t
+        erc-auto-query 'bury)
+=======
+(use-package erc
+  :custom
+  (erc-server "irc.libera.chat")
+  (erc-nick "juanpamf")
+  (erc-user-full-name "Juan Pablo Morales")
+  (erc-track-shorten-start 8)
+  (erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters" "#emacs")))
+  (erc-kill-buffer-on-part t)
+  (erc-auto-query 'bury))
+>>>>>>> Claude
+>>>>>>> Claude
