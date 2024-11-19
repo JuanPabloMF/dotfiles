@@ -36,6 +36,47 @@
 : t
 
 ** UI
+*** Font
+#+begin_src emacs-lisp
+  (setq fontaine-presets
+      '((tiny
+         :default-family "Iosevka Comfy Wide Fixed"
+         :default-height 70)
+        (small
+         :default-family "Iosevka Comfy Fixed"
+         :default-height 90)
+        (regular
+         :default-height 100)
+        (medium
+         :default-height 110)
+        (large
+         :default-weight semilight
+         :default-height 140
+         :bold-weight extrabold)
+        (presentation
+         :default-weight semilight
+         :default-height 170
+         :bold-weight extrabold)
+        (t
+         ;; I keep all properties for didactic purposes, but most can be
+         ;; omitted.  See the fontaine manual for the technicalities:
+         ;; <https://protesilaos.com/emacs/fontaine>.
+         :default-family "Iosevka Comfy"
+         :default-weight regular
+         :default-height 100
+         :fixed-pitch-family nil ; falls back to :default-family
+         :fixed-pitch-weight nil ; falls back to :default-weight
+         :fixed-pitch-height 1.0
+         :variable-pitch-family "Iosevka Comfy Duo"
+         :variable-pitch-weight nil
+         :variable-pitch-height 1.0
+         :bold-family nil ; use whatever the underlying face has
+         :bold-weight bold
+         :italic-family nil
+         :italic-slant italic
+         :line-spacing nil)))
+
+#+end_src
 *** Theme
 
 #+begin_src emacs-lisp
@@ -1025,31 +1066,46 @@ To be added
     (elysium-window-size 0.33) ; The elysium buffer will be 1/3 your screen
     (elysium-window-style 'vertical)) ; Can be customized to horizontal
 
+  (defun get-authinfo-password (machine)
+    "Read the contents of FILE-PATH and return it as a string."
+    (let ((auth-info (auth-source-search :host machine)))
+      (if auth-info
+  	(let ((secret (plist-get (car auth-info) :secret)))
+  	  (if (functionp secret)
+  	      (funcall secret)
+              secret)
+  	  )
+        (message "No matching auth info found."))))
+  (defun gptel-api-key ()
+    (get-authinfo-password "anthropic.com"))
+
   (use-package gptel
     :custom
     (gptel-model "claude-3-5-sonnet-20240620")
     :config
-    (defun get-authinfo-password (machine)
-      "Read the contents of FILE-PATH and return it as a string."
-      (let ((auth-info (auth-source-search :host machine)))
-        (if auth-info
-  	  (let ((secret (plist-get (car auth-info) :secret)))
-  	    (if (functionp secret)
-  		(funcall secret)
-                secret)
-  	    )
-  	(message "No matching auth info found."))))
-    (defun gptel-api-key ()
-      (get-authinfo-password "anthropic.com"))
     (setq
      gptel-backend (gptel-make-anthropic "Claude"
                      :stream t
-                     :key #'gptel-api-key)))
+                     :key #'gptel-api-key
+  		   ))
+    )
 
   (use-package smerge-mode
     :ensure nil
     :hook
     (prog-mode . smerge-mode))
+
+  (use-package aider
+    :straight (:host github :repo "tninja/aider.el" :files ("aider.el"))
+    :config
+    (setq aider-args '("--model" "claude-3-5-sonnet-20240620"))
+    (setenv "OPENAI_API_KEY" (gptel-api-key))
+    ;; Optional: Set a key binding for the transient menu
+    (global-set-key (kbd "C-c a") 'aider-transient-menu))
+
+  (use-package copilot
+    :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+    :ensure t)
 
 #+end_src
 
