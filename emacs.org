@@ -7,33 +7,41 @@
 ** TODO leave anchors you can quickly move to (like C-x C-x)->see registers
 ** DONE save history
 * Base Config
-** Package Managemegnt
+** Package Management
 
 
 #+begin_src emacs-lisp
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-         (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-        (bootstrap-version 5))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-          (url-retrieve-synchronously
-           "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-           'silent 'inhibit-cookies)
-        (goto-char (point-max))
-        (eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage))
+    ;; (defvar bootstrap-version)
+    ;; (let ((bootstrap-file
+    ;; 	 (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+    ;; 	(bootstrap-version 5))
+    ;;   (unless (file-exists-p bootstrap-file)
+    ;;     (with-current-buffer
+    ;; 	  (url-retrieve-synchronously
+    ;; 	   "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+    ;; 	   'silent 'inhibit-cookies)
+    ;; 	(goto-char (point-max))
+    ;; 	(eval-print-last-sexp)))
+    ;;   (load bootstrap-file nil 'nomessage))
 
-
+  (require 'package)
   (setq package-enable-at-startup nil)
-  (add-to-list 'load-path "~/.emacs.d/site-lisp/")
-  (setq use-package-always-ensure t)
-  (straight-use-package 'use-package)
-  (setq straight-use-package-by-default t)
+    (add-to-list 'load-path "/home/juanpablo/.emacs.d/site-lisp/")
+    (add-to-list 'load-path "/home/juanpablo/.guix-profile/share/emacs/site-lisp/")
+  (let ((default-directory (expand-file-name "~/.emacs.d/site-lisp/")))
+  (normal-top-level-add-subdirs-to-load-path))
+  (package-initialize)
+  (require 's)
+  (require 'use-package)
+  (use-package use-package-ensure-guix
+    :custom
+    (use-package-ensure-function #'use-package-ensure-guix)
+    (use-package-ensure-guix-profile "/home/juanpablo/.guix-profile")
+    )
+    (setq use-package-always-ensure t)
+    ;; (straight-use-package 'use-package)
+    ;; (setq straight-use-package-by-default t)
 #+end_src
-
-#+RESULTS:
-: t
 
 ** UI
 *** Font
