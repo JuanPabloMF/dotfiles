@@ -8,7 +8,13 @@
 ** DONE save history
 * Base Config
 ** Package Management
-
+#+begin_src emacs-lisp
+(with-eval-after-load 'guix-repl
+    (setq guix-guile-program  '("guix" "repl")
+          guix-config-scheme-compiled-directory  nil
+          guix-repl-use-latest  nil
+          guix-repl-use-server  nil))
+#+end_src
 
 #+begin_src emacs-lisp
     ;; (defvar bootstrap-version)
