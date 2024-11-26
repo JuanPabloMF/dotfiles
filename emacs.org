@@ -9,46 +9,54 @@
 * Base Config
 ** Package Management
 #+begin_src emacs-lisp
-(with-eval-after-load 'guix-repl
-    (setq guix-guile-program  '("guix" "repl")
-          guix-config-scheme-compiled-directory  nil
-          guix-repl-use-latest  nil
-          guix-repl-use-server  nil))
+(setq warning-minimum-level :error)
 #+end_src
 
 #+begin_src emacs-lisp
-    ;; (defvar bootstrap-version)
-    ;; (let ((bootstrap-file
-    ;; 	 (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-    ;; 	(bootstrap-version 5))
-    ;;   (unless (file-exists-p bootstrap-file)
-    ;;     (with-current-buffer
-    ;; 	  (url-retrieve-synchronously
-    ;; 	   "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-    ;; 	   'silent 'inhibit-cookies)
-    ;; 	(goto-char (point-max))
-    ;; 	(eval-print-last-sexp)))
-    ;;   (load bootstrap-file nil 'nomessage))
 
   (require 'package)
   (setq package-enable-at-startup nil)
-    (add-to-list 'load-path "/home/juanpablo/.emacs.d/site-lisp/")
-    (add-to-list 'load-path "/home/juanpablo/.guix-profile/share/emacs/site-lisp/")
+  (add-to-list 'load-path "/home/juanpablo/.emacs.d/site-lisp/")
+  (add-to-list 'load-path "/home/juanpablo/.guix-profile/share/emacs/site-lisp/")
   (let ((default-directory (expand-file-name "~/.emacs.d/site-lisp/")))
-  (normal-top-level-add-subdirs-to-load-path))
+    (normal-top-level-add-subdirs-to-load-path))
   (package-initialize)
   (require 's)
   (require 'use-package)
+  (use-package guix
+    :config
+    (with-eval-after-load 'guix-repl
+      (setq guix-guile-program  '("guix" "repl")
+	    guix-config-scheme-compiled-directory  nil
+	    guix-repl-use-latest  nil
+	    guix-repl-use-server  nil))
+    (setq guix-ask-before-buffer-update nil)
+    )
   (use-package use-package-ensure-guix
     :custom
     (use-package-ensure-function #'use-package-ensure-guix)
     (use-package-ensure-guix-profile "/home/juanpablo/.guix-profile")
+    (use-package-always-ensure t)
     )
-    (setq use-package-always-ensure t)
-    ;; (straight-use-package 'use-package)
-    ;; (setq straight-use-package-by-default t)
-#+end_src
 
+
+  ;; (straight-use-package 'use-package)
+  ;; (setq straight-use-package-by-default t)
+#+end_src
+#+begin_src emacs-lisp
+  (defvar bootstrap-version)
+  (let ((bootstrap-file
+	   (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
+	  (bootstrap-version 5))
+    (unless (file-exists-p bootstrap-file)
+      (with-current-buffer
+	    (url-retrieve-synchronously
+	     "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
+	     'silent 'inhibit-cookies)
+	  (goto-char (point-max))
+	  (eval-print-last-sexp)))
+    (load bootstrap-file nil 'nomessage))
+#+end_src
 ** UI
 *** Font
 #+begin_src emacs-lisp
@@ -424,43 +432,45 @@ enjoy using a lot.
 ** Hydras
 *** Window
 #+begin_src emacs-lisp
-  (use-package hydra)
-  (use-package pretty-hydra)
-  (use-package windmove)
-  (use-package transpose-frame)
-  (use-package headlong)
-  (winner-mode 1)
+      (use-package hydra)
+      (use-package pretty-hydra)
+      (use-package windmove
+	:straight t)
+      (use-package transpose-frame)
+      (use-package headlong
+	:straight t)
+      (winner-mode 1)
 
-  ;;shameleslly taken from abo-abo's init files
-  ;; (pretty-hydra-define hydra-window (:foreign-keys warn :quit-key "q")
-  ;; ("Arrange"
-  ;;  (("v" (lambda ()
-  ;;          (interactive)
-  ;;          (split-window-right)
-  ;;          (windmove-right))
-  ;;        "vert")
-  ;;   ("x" (lambda ()
-  ;;          (interactive)
-  ;;          (split-window-below)
-  ;;          (windmove-down))
-  ;;        "horz")
-  ;;  ("d" ace-delete-window "del")
-  ;;  ("o" delete-other-windows "one" :exit t)
-  ;;  ("s" ace-swap-window "swap") 
-  ;;  ("t" transpose-frame "transpose" :exit t)
-  ;;  ("+" balance-windows "balance")
-  ;;  ("u" (progn (winner-undo) (setq this-command 'winner-undo)) "undo"))
-  ;;  "Move"
-  ;;  (("h" windmove-left nil)
-  ;;   ("j" windmove-down nil)
-  ;;   ("k" windmove-up nil)
-  ;;   ("l" windmove-right nil)
-  ;;   ("a" ace-window "ace")
-  ;;   ("i" ace-maximize-window "ace-one" :exit t)
-  ;;   ("b" ido-switch-buffer "buf")
-  ;;   ("m" headlong-bookmark-jump "bmk"))
-  ;;   )
-  ;; )
+      ;;shameleslly taken from abo-abo's init files
+      ;; (pretty-hydra-define hydra-window (:foreign-keys warn :quit-key "q")
+      ;; ("Arrange"
+      ;;  (("v" (lambda ()
+      ;;          (interactive)
+      ;;          (split-window-right)
+      ;;          (windmove-right))
+      ;;        "vert")
+      ;;   ("x" (lambda ()
+      ;;          (interactive)
+      ;;          (split-window-below)
+      ;;          (windmove-down))
+      ;;        "horz")
+      ;;  ("d" ace-delete-window "del")
+      ;;  ("o" delete-other-windows "one" :exit t)
+      ;;  ("s" ace-swap-window "swap") 
+      ;;  ("t" transpose-frame "transpose" :exit t)
+      ;;  ("+" balance-windows "balance")
+      ;;  ("u" (progn (winner-undo) (setq this-command 'winner-undo)) "undo"))
+      ;;  "Move"
+      ;;  (("h" windmove-left nil)
+      ;;   ("j" windmove-down nil)
+      ;;   ("k" windmove-up nil)
+      ;;   ("l" windmove-right nil)
+      ;;   ("a" ace-window "ace")
+      ;;   ("i" ace-maximize-window "ace-one" :exit t)
+      ;;   ("b" ido-switch-buffer "buf")
+      ;;   ("m" headlong-bookmark-jump "bmk"))
+      ;;   )
+      ;; )
 #+end_src
 
 #+RESULTS:
@@ -575,13 +585,14 @@ To be added
 *** Prescient
 
 #+begin_src emacs-lisp
-(use-package ivy-prescient
-  :after counsel
-  :custom
-  (ivy-prescient-enable-filtering nil)
-  :config
-  (setq ivy-prescient-sort-commands '(:not swiper swiper-isearch counsel-yank-pop counsel-find-file counsel-recentf counsel-descbinds))
-  (ivy-prescient-mode 1))
+  (use-package ivy-prescient
+    :straight t
+    :after counsel
+    :custom
+    (ivy-prescient-enable-filtering nil)
+    :config
+    (setq ivy-prescient-sort-commands '(:not swiper swiper-isearch counsel-yank-pop counsel-find-file counsel-recentf counsel-descbinds))
+    (ivy-prescient-mode 1))
 #+end_src
 
 #+RESULTS:
@@ -641,17 +652,29 @@ To be added
 ** Casual
 #+begin_src emacs-lisp
 
-(use-package re-builder
-  :defer t)
+    (use-package re-builder
+      :straight t
+      :defer t)
 
-(use-package casual-re-builder
-  :after (re-builder))
+  (use-package casual-lib
+      :straight (casual-lib :type git :host github :repo "kickingvegas/casual-lib")
+      :after (re-builder))  
 
-(use-package  casual-dired)
+    (use-package casual-re-builder
+      :straight (casual-re-builder :type git :host github :repo "kickingvegas/casual-re-builder")
+      :after (re-builder))
 
-(use-package casual-info)
+    (use-package  casual-dired
+      :straight (casual-dired :type git :host github :repo "kickingvegas/casual-dired")      
+      :straight t)
 
-(use-package casual-bookmarks)
+    (use-package casual-info
+      :straight (casual-info :type git :host github :repo "kickingvegas/casual-info")
+      :straight t)
+
+    (use-package casual-bookmarks
+      :straight (casual-bookmarks :type git :host github :repo "kickingvegas/casual-bookmarks")
+      :straight t)
 #+end_src
 * Editing
 ** Avy
@@ -683,15 +706,15 @@ To be added
 
 ** Ediff
 #+begin_src emacs-lisp
-    (defmacro csetq (variable value)
+  (defmacro csetq (variable value)
     `(funcall (or (get ',variable 'custom-set)
                   'set-default)
               ',variable ,value))
 
-    (csetq ediff-window-setup-function 'ediff-setup-windows-plain)
-    (csetq ediff-split-window-function 'split-window-horizontally)
+  (csetq ediff-window-setup-function 'ediff-setup-windows-plain)
+  (csetq ediff-split-window-function 'split-window-horizontally)
 
-    (defun ora-ediff-hook ()
+  (defun ora-ediff-hook ()
     (ediff-setup-keymap)
     (define-key ediff-mode-map "j" 'ediff-next-difference)
     (define-key ediff-mode-map "k" 'ediff-previous-difference))
@@ -699,7 +722,7 @@ To be added
   (add-hook 'ediff-mode-hook 'ora-ediff-hook)
 
   (winner-mode)
-(add-hook 'ediff-after-quit-hook-internal 'winner-undo)
+  (add-hook 'ediff-after-quit-hook-internal 'winner-undo)
 
 
 #+end_src
@@ -720,7 +743,7 @@ To be added
                      ("%h")))
                    (tramp-async-args
                     (("-q")))
-		   (tramp-remote-shell         "/bin/sh")
+  		 (tramp-remote-shell         "/bin/sh")
                    (tramp-remote-shell-login
                     ("-l"))
                    (tramp-remote-shell-args
@@ -728,37 +751,45 @@ To be added
                  )
     (tramp-set-completion-function "sshxa" tramp-completion-function-alist-ssh))
 
-    (use-package docker-tramp)
+  (use-package docker-tramp)
 
-      (defun remote-shell--dummy1 (path)
-          (interactive "sPath:")
-          (let ((default-directory path) (current-prefix-arg '(4)))
-            (call-interactively 'shell)))
+  (defun remote-shell--dummy1 (path)
+    (interactive "sPath:")
+    (let ((default-directory path) (current-prefix-arg '(4)))
+      (call-interactively 'shell)))
 
-      (defun remote-shell--dummy2 (path)
-          (interactive (list (read-directory-name "Default directory: " nil nil t default-directory)))
-          (let ((default-directory path) (current-prefix-arg '(4)))
-            (call-interactively 'shell)))
+  (defun remote-shell--dummy2 (path)
+    (interactive (list (read-directory-name "Default directory: " nil nil t default-directory)))
+    (let ((default-directory path) (current-prefix-arg '(4)))
+      (call-interactively 'shell)))
 
-      ;; (load-file (concat (car (directory-files "/home/juanpablo/.emacs.d/elpa/" t "counsel*" nil)) "/counsel.el"))
-      (load-file "/home/juanpablo/.emacs.d/straight/build/counsel/counsel.el")
-      (defun open-shell-new-buffer (path)
-        (let ((default-directory path) (current-prefix-arg '(4)))
-          (call-interactively 'shell)
-          )
-        )
-      (defun remote-shell ()
-        (interactive)
-        (ivy-read "Open shell in path:" #'read-file-name-internal
-                  :matcher #'counsel--find-file-matcher
-                  :initial-input nil
-                  :action #'open-shell-new-buffer
-                  :preselect (counsel--preselect-file)
-                  :require-match 'confirm-after-completion
-                  :history 'file-name-history
-                  :keymap counsel-find-file-map
-                  :caller #'remote-shell)
-        )
+
+  (defun find-package-path (package-name)
+    "Find the installation path of a given PACKAGE-NAME."
+    (let ((package-desc (cadr (assq package-name package-alist))))
+      (if package-desc
+  	(package-desc-dir package-desc)
+        (message "Package '%s' not found!" package-name))))
+
+  ;; (load-file (concat (car (directory-files "/home/juanpablo/.emacs.d/elpa/" t "counsel*" nil)) "/counsel.el"))
+  (load-file (concat (find-package-path 'counsel) "/counsel.el"))
+  (defun open-shell-new-buffer (path)
+    (let ((default-directory path) (current-prefix-arg '(4)))
+      (call-interactively 'shell)
+      )
+    )
+  (defun remote-shell ()
+    (interactive)
+    (ivy-read "Open shell in path:" #'read-file-name-internal
+              :matcher #'counsel--find-file-matcher
+              :initial-input nil
+              :action #'open-shell-new-buffer
+              :preselect (counsel--preselect-file)
+              :require-match 'confirm-after-completion
+              :history 'file-name-history
+              :keymap counsel-find-file-map
+              :caller #'remote-shell)
+    )
 #+end_src
 
 #+RESULTS:
@@ -766,55 +797,55 @@ To be added
 * Org
 
 #+begin_src emacs-lisp
-(defun efs/org-font-setup ()
-  ;; Replace list hyphen with dot
-  (font-lock-add-keywords 'org-mode
-                          '(("^ *\\([-]\\) "
-                             (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
+  (defun efs/org-font-setup ()
+    ;; Replace list hyphen with dot
+    (font-lock-add-keywords 'org-mode
+                            '(("^ *\\([-]\\) "
+                               (0 (prog1 () (compose-region (match-beginning 1) (match-end 1) "•"))))))
 
-  ;; Set faces for heading levels
-  (dolist (face '((org-level-1 . 1.2)
-                  (org-level-2 . 1.1)
-                  (org-level-3 . 1.05)
-                  (org-level-4 . 1.0)
-                  (org-level-5 . 1.1)
-                  (org-level-6 . 1.1)
-                  (org-level-7 . 1.1)
-                  (org-level-8 . 1.1)))
-    (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
+    ;; Set faces for heading levels
+    (dolist (face '((org-level-1 . 1.2)
+                    (org-level-2 . 1.1)
+                    (org-level-3 . 1.05)
+                    (org-level-4 . 1.0)
+                    (org-level-5 . 1.1)
+                    (org-level-6 . 1.1)
+                    (org-level-7 . 1.1)
+                    (org-level-8 . 1.1)))
+      (set-face-attribute (car face) nil :font "Cantarell" :weight 'regular :height (cdr face)))
 
-  ;; Ensure that anything that should be fixed-pitch in Org files appears that way
-  (set-face-attribute 'org-block nil    :foreground nil :inherit 'fixed-pitch)
-  (set-face-attribute 'org-table nil    :inherit 'fixed-pitch)
-  (set-face-attribute 'org-formula nil  :inherit 'fixed-pitch)
-  (set-face-attribute 'org-code nil     :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-table nil    :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
-  (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
-  (set-face-attribute 'org-checkbox nil  :inherit 'fixed-pitch)
-  (set-face-attribute 'line-number nil :inherit 'fixed-pitch)
-  (set-face-attribute 'line-number-current-line nil :inherit 'fixed-pitch))
+    ;; Ensure that anything that should be fixed-pitch in Org files appears that way
+    (set-face-attribute 'org-block nil    :foreground nil :inherit 'fixed-pitch)
+    (set-face-attribute 'org-table nil    :inherit 'fixed-pitch)
+    (set-face-attribute 'org-formula nil  :inherit 'fixed-pitch)
+    (set-face-attribute 'org-code nil     :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-table nil    :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-verbatim nil :inherit '(shadow fixed-pitch))
+    (set-face-attribute 'org-special-keyword nil :inherit '(font-lock-comment-face fixed-pitch))
+    (set-face-attribute 'org-meta-line nil :inherit '(font-lock-comment-face fixed-pitch))
+    (set-face-attribute 'org-checkbox nil  :inherit 'fixed-pitch)
+    (set-face-attribute 'line-number nil :inherit 'fixed-pitch)
+    (set-face-attribute 'line-number-current-line nil :inherit 'fixed-pitch))
+  
+  (defun efs/org-mode-setup ()
+    (org-indent-mode)
+    (variable-pitch-mode 1)
+    (visual-line-mode 1))
 
-(defun efs/org-mode-setup ()
-  (org-indent-mode)
-  (variable-pitch-mode 1)
-  (visual-line-mode 1))
-
-(use-package org
-  :commands (org-capture org-agenda)
-  :hook (org-mode . efs/org-mode-setup)
-  :config
-  (setq org-ellipsis " ▾")
-;;  (efs/org-font-setup)
-  (org-babel-do-load-languages
-    'org-babel-load-languages
-    '((emacs-lisp . t)
-      (python . t)
-      (shell . t)))
-  (setq org-confirm-babel-evaluate nil)
-  (setq org-capture-templates nil)
-)
+  (use-package org
+    :commands (org-capture org-agenda)
+    :hook (org-mode . efs/org-mode-setup)
+    :config
+    (setq org-ellipsis " ▾")
+  ;;  (efs/org-font-setup)
+    (org-babel-do-load-languages
+      'org-babel-load-languages
+      '((emacs-lisp . t)
+        (python . t)
+        (shell . t)))
+    (setq org-confirm-babel-evaluate nil)
+    (setq org-capture-templates nil)
+  )
 #+end_src
 
 #+RESULTS:
@@ -839,15 +870,16 @@ To be added
 * IDE
 ** Shells
 #+begin_src emacs-lisp
-(use-package term
-  :config
-  (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
+  (use-package term
+    :straight t
+    :config
+    (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
 
-  ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
-  (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
+    ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
+    (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
 
-(use-package eterm-256color
-  :hook (term-mode . eterm-256color-mode))
+  (use-package eterm-256color
+    :hook (term-mode . eterm-256color-mode))
 #+end_src  
 #+RESULTS:
 : t
@@ -902,6 +934,7 @@ To be added
 
     ;; Use dabbrev with Corfu!
     (use-package dabbrev
+      :straight t
       ;; Swap M-/ and C-M-/
       :bind (("M-/" . dabbrev-completion)
              ("C-M-/" . dabbrev-expand)))
@@ -1024,6 +1057,7 @@ To be added
 
 #+begin_src emacs-lisp
   (use-package python-mode
+    :straight t
     :hook (python-mode . lsp-deferred)
     :custom
     (dap-python-debugger 'debugpy)
@@ -1179,32 +1213,34 @@ To be added
 : t
 ** Org Tree Slide
 #+begin_src emacs-lisp
-(use-package hide-lines)
+  (use-package hide-lines)
 
-(defun my:hide-headers ()
-  ;; hide block begin/end markers
-  ;; not sure why but hide-lines *really* needs
-  ;; loaded each time we call this..
-  (load-library "hide-lines")
-  (hide-lines-matching
-   "#\\+\\(BEGIN\\|END\\)_\\(SRC\\|EXAMPLE\\|VERSE\\|QUOTE\\)")
-  (hide-lines-matching
-   "#\\+ATTR_ORG"))
+  (defun my/hide-headers ()
+    ;; hide block begin/end markers
+    ;; not sure why but hide-lines *really* needs
+    ;; loaded each time we call this..
+    (load-library "hide-lines")
+    (hide-lines-matching
+     "#\\+\\(BEGIN\\|END\\)_\\(SRC\\|EXAMPLE\\|VERSE\\|QUOTE\\)")
+    (hide-lines-matching
+     "#\\+ATTR_ORG"))
 
-(defun my:show-headers ()
-  (hide-lines-show-all)
-  (org-show-all))
+  (defun my/show-headers ()
+    (hide-lines-show-all)
+    (org-show-all))
 
-(use-package command-log-mode)
+  (use-package
+    :straight t
+    command-log-mode)
 
-(use-package org-tree-slide
-  :custom
-  (org-image-actual-width nil)
-  (org-tree-slide-header nil)
-  (org-tree-slide-heading-emphasis t)
-  ;:hook ((org-tree-slide-play . my:hide-headers)
-  ;(org-tree-slide-stop . my:show-headers))
-  )
+  (use-package org-tree-slide
+    :custom
+    (org-image-actual-width nil)
+    (org-tree-slide-header nil)
+    (org-tree-slide-heading-emphasis t)
+    ;:hook ((org-tree-slide-play . my:hide-headers)
+    ;(org-tree-slide-stop . my:show-headers))
+    )
 #+end_src
 
 #+RESULTS:
@@ -1241,144 +1277,144 @@ To be added
 #+begin_src emacs-lisp
        (use-package magit)
 
-       (use-package magit-delta
-         :hook (magit-mode . magit-delta-mode)
-         )
+  ;;      (use-package magit-delta
+  ;;        :hook (magit-mode . magit-delta-mode)
+  ;;        )
 
 
-  (defun my/toggle-magit-delta ()
-    (interactive)
-    (magit-delta-mode
-     (if magit-delta-mode
-         -1
-       1))
-    (magit-refresh))
+  ;; (defun my/toggle-magit-delta ()
+  ;;   (interactive)
+  ;;   (magit-delta-mode
+  ;;    (if magit-delta-mode
+  ;;        -1
+  ;;      1))
+  ;;   (magit-refresh))
 
-       (defun my/magit--with-difftastic (buffer command)
-       "Run COMMAND with GIT_EXTERNAL_DIFF=difft then show result in BUFFER."
-       (let ((process-environment
-              (cons (concat "TMP=~/tmp GIT_EXTERNAL_DIFF=difftastic --width="
-                            (number-to-string (frame-width)))
-                    process-environment)))
-         ;; Clear the result buffer (we might regenerate a diff, e.g., for
-         ;; the current changes in our working directory).
-         (with-current-buffer buffer
-           (setq buffer-read-only nil)
-           (erase-buffer))
-         ;; Now spawn a process calling the git COMMAND.
-         (make-process
-          :name (buffer-name buffer)
-          :buffer buffer
-          :command command
-          ;; Don't query for running processes when emacs is quit.
-          :noquery t
-          ;; Show the result buffer once the process has finished.
-          :sentinel (lambda (proc event)
-                      (when (eq (process-status proc) 'exit)
-                        (with-current-buffer (process-buffer proc)
-                          (goto-char (point-min))
-                          (ansi-color-apply-on-region (point-min) (point-max))
-                          (setq buffer-read-only t)
-                          (view-mode)
-                          (end-of-line)
-                          ;; difftastic diffs are usually 2-column side-by-side,
-                          ;; so ensure our window is wide enough.
-                          (let ((width (current-column)))
-                            (while (zerop (forward-line 1))
-                              (end-of-line)
-                              (setq width (max (current-column) width)))
-                            ;; Add column size of fringes
-                            (setq width (+ width
-                                           (fringe-columns 'left)
-                                           (fringe-columns 'right)))
-                            (goto-char (point-min))
-                            (pop-to-buffer
-                             (current-buffer)
-                             `(;; If the buffer is that wide that splitting the frame in
-                               ;; two side-by-side windows would result in less than
-                               ;; 80 columns left, ensure it's shown at the bottom.
-                               ,(when (> 80 (- (frame-width) width))
-                                  #'display-buffer-at-bottom)
-                               (window-width
-                                . ,(min width (frame-width))))))))))))
-
-
-       (defun my/magit-show-with-difftastic (rev)
-       "Show the result of \"git show REV\" with GIT_EXTERNAL_DIFF=difft."
-       (interactive
-        (list (or
-               ;; If REV is given, just use it.
-               (when (boundp 'rev) rev)
-               ;; If not invoked with prefix arg, try to guess the REV from
-               ;; point's position.
-               (and (not current-prefix-arg)
-                    (or (magit-thing-at-point 'git-revision t)
-                        (magit-branch-or-commit-at-point)))
-               ;; Otherwise, query the user.
-               (magit-read-branch-or-commit "Revision"))))
-       (if (not rev)
-           (error "No revision specified")
-         (my/magit--with-difftastic
-          (get-buffer-create (concat "*git show difftastic " rev "*"))
-          (list "git" "--no-pager" "show" "--ext-diff" rev))))
-
-      (defun my/magit-diff-with-difftastic (arg)
-       "Show the result of \"git diff ARG\" with GIT_EXTERNAL_DIFF=difftastic."
-       (interactive
-        (list (or
-               ;; If RANGE is given, just use it.
-               (when (boundp 'range) range)
-               ;; If prefix arg is given, query the user.
-               (and current-prefix-arg
-                    (magit-diff-read-range-or-commit "Range"))
-               ;; Otherwise, auto-guess based on position of point, e.g., based on
-               ;; if we are in the Staged or Unstaged section.
-               (pcase (magit-diff--dwim)
-                 ('unmerged (error "unmerged is not yet implemented"))
-                 ('unstaged nil)
-                 ('staged "--cached")
-                 (`(stash . ,value) (error "stash is not yet implemented"))
-                 (`(commit . ,value) (format "%s^..%s" value value))
-                 ((and range (pred stringp)) range)
-                 (_ (magit-diff-read-range-or-commit "Range/Commit"))))))
-       (let ((name (concat "*git diff difftastic"
-                           (if arg (concat " " arg) "")
-                           "*")))
-         (my/magit--with-difftastic
-          (get-buffer-create name)
-          `("git" "--no-pager" "diff" "--ext-diff" ,@(when arg (list arg))))))
+  ;;      (defun my/magit--with-difftastic (buffer command)
+  ;;      "Run COMMAND with GIT_EXTERNAL_DIFF=difft then show result in BUFFER."
+  ;;      (let ((process-environment
+  ;;             (cons (concat "TMP=~/tmp GIT_EXTERNAL_DIFF=difftastic --width="
+  ;;                           (number-to-string (frame-width)))
+  ;;                   process-environment)))
+  ;;        ;; Clear the result buffer (we might regenerate a diff, e.g., for
+  ;;        ;; the current changes in our working directory).
+  ;;        (with-current-buffer buffer
+  ;;          (setq buffer-read-only nil)
+  ;;          (erase-buffer))
+  ;;        ;; Now spawn a process calling the git COMMAND.
+  ;;        (make-process
+  ;;         :name (buffer-name buffer)
+  ;;         :buffer buffer
+  ;;         :command command
+  ;;         ;; Don't query for running processes when emacs is quit.
+  ;;         :noquery t
+  ;;         ;; Show the result buffer once the process has finished.
+  ;;         :sentinel (lambda (proc event)
+  ;;                     (when (eq (process-status proc) 'exit)
+  ;;                       (with-current-buffer (process-buffer proc)
+  ;;                         (goto-char (point-min))
+  ;;                         (ansi-color-apply-on-region (point-min) (point-max))
+  ;;                         (setq buffer-read-only t)
+  ;;                         (view-mode)
+  ;;                         (end-of-line)
+  ;;                         ;; difftastic diffs are usually 2-column side-by-side,
+  ;;                         ;; so ensure our window is wide enough.
+  ;;                         (let ((width (current-column)))
+  ;;                           (while (zerop (forward-line 1))
+  ;;                             (end-of-line)
+  ;;                             (setq width (max (current-column) width)))
+  ;;                           ;; Add column size of fringes
+  ;;                           (setq width (+ width
+  ;;                                          (fringe-columns 'left)
+  ;;                                          (fringe-columns 'right)))
+  ;;                           (goto-char (point-min))
+  ;;                           (pop-to-buffer
+  ;;                            (current-buffer)
+  ;;                            `(;; If the buffer is that wide that splitting the frame in
+  ;;                              ;; two side-by-side windows would result in less than
+  ;;                              ;; 80 columns left, ensure it's shown at the bottom.
+  ;;                              ,(when (> 80 (- (frame-width) width))
+  ;;                                 #'display-buffer-at-bottom)
+  ;;                              (window-width
+  ;;                               . ,(min width (frame-width))))))))))))
 
 
-      (defun my/recolor-difftastic ()
-      (let ((ovs (overlays-in (point-min) (point-max))))
-        (dolist (ov ovs)
-          (let ((face (overlay-get ov 'face)))
-            (when (and (not (null face)) (listp face))
-              (when (plist-get face :foreground)
-                (plist-put face :foreground (my/get-remapped-difftastic-colour (plist-get face :foreground))))
-              (when-let ((existing (cl-find :foreground face :key (lambda (x) (if (consp x) (car x) nil)))))
-                (setf face
-                      (cl-subst `(:foreground ,(my/get-remapped-difftastic-colour (plist-get existing :foreground)))
-                                :foreground
-                                face
-                                :key (lambda (x) (if (consp x) (car x) nil)))))
-              (overlay-put ov 'face face))))))
+  ;;      (defun my/magit-show-with-difftastic (rev)
+  ;;      "Show the result of \"git show REV\" with GIT_EXTERNAL_DIFF=difft."
+  ;;      (interactive
+  ;;       (list (or
+  ;;              ;; If REV is given, just use it.
+  ;;              (when (boundp 'rev) rev)
+  ;;              ;; If not invoked with prefix arg, try to guess the REV from
+  ;;              ;; point's position.
+  ;;              (and (not current-prefix-arg)
+  ;;                   (or (magit-thing-at-point 'git-revision t)
+  ;;                       (magit-branch-or-commit-at-point)))
+  ;;              ;; Otherwise, query the user.
+  ;;              (magit-read-branch-or-commit "Revision"))))
+  ;;      (if (not rev)
+  ;;          (error "No revision specified")
+  ;;        (my/magit--with-difftastic
+  ;;         (get-buffer-create (concat "*git show difftastic " rev "*"))
+  ;;         (list "git" "--no-pager" "show" "--ext-diff" rev))))
 
-    (defun my/get-remapped-difftastic-colour (original)
-      (alist-get original +my/difftastic-colour-remapping+ nil nil 'string=))
+  ;;     (defun my/magit-diff-with-difftastic (arg)
+  ;;      "Show the result of \"git diff ARG\" with GIT_EXTERNAL_DIFF=difftastic."
+  ;;      (interactive
+  ;;       (list (or
+  ;;              ;; If RANGE is given, just use it.
+  ;;              (when (boundp 'range) range)
+  ;;              ;; If prefix arg is given, query the user.
+  ;;              (and current-prefix-arg
+  ;;                   (magit-diff-read-range-or-commit "Range"))
+  ;;              ;; Otherwise, auto-guess based on position of point, e.g., based on
+  ;;              ;; if we are in the Staged or Unstaged section.
+  ;;              (pcase (magit-diff--dwim)
+  ;;                ('unmerged (error "unmerged is not yet implemented"))
+  ;;                ('unstaged nil)
+  ;;                ('staged "--cached")
+  ;;                (`(stash . ,value) (error "stash is not yet implemented"))
+  ;;                (`(commit . ,value) (format "%s^..%s" value value))
+  ;;                ((and range (pred stringp)) range)
+  ;;                (_ (magit-diff-read-range-or-commit "Range/Commit"))))))
+  ;;      (let ((name (concat "*git diff difftastic"
+  ;;                          (if arg (concat " " arg) "")
+  ;;                          "*")))
+  ;;        (my/magit--with-difftastic
+  ;;         (get-buffer-create name)
+  ;;         `("git" "--no-pager" "diff" "--ext-diff" ,@(when arg (list arg))))))
 
-    (defconst +my/difftastic-colour-remapping+
-      `(("red2" . "#a8353e") ;; https://oklch.com/#50,0.15,20,100
-        ("green2" . "#107823")
-        ("yellow2" . "#2f3b97")))
 
-    (unless (boundp 'my/added-magit-diff-suffixes)
-      (transient-append-suffix 'magit-diff '(-1 -1)
-      [("l" "Toggle magit-delta" my/toggle-magit-delta)
-       ("D" "Difftastic Diff (dwim)" my/magit-diff-with-difftastic)
-       ("S" "Difftastic Show" my/magit-show-with-difftastic)]))
+  ;;     (defun my/recolor-difftastic ()
+  ;;     (let ((ovs (overlays-in (point-min) (point-max))))
+  ;;       (dolist (ov ovs)
+  ;;         (let ((face (overlay-get ov 'face)))
+  ;;           (when (and (not (null face)) (listp face))
+  ;;             (when (plist-get face :foreground)
+  ;;               (plist-put face :foreground (my/get-remapped-difftastic-colour (plist-get face :foreground))))
+  ;;             (when-let ((existing (cl-find :foreground face :key (lambda (x) (if (consp x) (car x) nil)))))
+  ;;               (setf face
+  ;;                     (cl-subst `(:foreground ,(my/get-remapped-difftastic-colour (plist-get existing :foreground)))
+  ;;                               :foreground
+  ;;                               face
+  ;;                               :key (lambda (x) (if (consp x) (car x) nil)))))
+  ;;             (overlay-put ov 'face face))))))
 
-  (setf my/added-magit-diff-suffixes t)
+  ;;   (defun my/get-remapped-difftastic-colour (original)
+  ;;     (alist-get original +my/difftastic-colour-remapping+ nil nil 'string=))
+
+  ;;   (defconst +my/difftastic-colour-remapping+
+  ;;     `(("red2" . "#a8353e") ;; https://oklch.com/#50,0.15,20,100
+  ;;       ("green2" . "#107823")
+  ;;       ("yellow2" . "#2f3b97")))
+
+  ;;   (unless (boundp 'my/added-magit-diff-suffixes)
+  ;;     (transient-append-suffix 'magit-diff '(-1 -1)
+  ;;     [("l" "Toggle magit-delta" my/toggle-magit-delta)
+  ;;      ("D" "Difftastic Diff (dwim)" my/magit-diff-with-difftastic)
+  ;;      ("S" "Difftastic Show" my/magit-show-with-difftastic)]))
+
+  ;; (setf my/added-magit-diff-suffixes t)
 
 
 #+end_src
@@ -1419,20 +1455,20 @@ To be added
 ** Nyxt
 
 #+begin_src emacs-lisp :tangle no
-    (use-package emacs-with-nyxt
-      :ensure nil
-      :load-path "~/.emacs.d/site-lisp/emacs-with-nyxt"
-      )
+  ;;   (use-package emacs-with-nyxt
+  ;;     :ensure nil
+  ;;     :load-path "~/.emacs.d/site-lisp/emacs-with-nyxt"
+  ;;     )
 
-  (use-package slime
-      :config
-      (setq slime-lisp-implementations 
-        '(
-          ;; (clisp ("/usr/bin/clisp"))
-          (sbcl ("/usr/bin/sbcl"))
-        )
-      )
-    )
+  ;; (use-package slime
+  ;;     :config
+  ;;     (setq slime-lisp-implementations 
+  ;;       '(
+  ;;         ;; (clisp ("/usr/bin/clisp"))
+  ;;         (sbcl ("/usr/bin/sbcl"))
+  ;;       )
+  ;;     )
+  ;;   )
 
 #+end_src
 
@@ -1465,38 +1501,16 @@ To be added
 ** IRC
 
 #+begin_src emacs-lisp
-  (setq erc-server "irc.libera.chat"
-    erc-nick "juanpamf"    ; Change this!
-    erc-user-full-name "Juan Pablo Morales"  ; And this!
-    erc-track-shorten-start 8
-    erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters" "#emacs"))
-    erc-kill-buffer-on-part t
-          erc-auto-query 'bury)
+  (use-package erc
+    :straight t
+    :custom
+    (erc-server "irc.libera.chat")
+    (erc-nick "juanpamf")
+    (erc-user-full-name "Juan Pablo Morales")
+    (erc-track-shorten-start 8)
+    (erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters" "#emacs")))
+    (erc-kill-buffer-on-part t)
+    (erc-auto-query 'bury))
+
 
 #+end_src
-<<<<<<< HEAD
-=======
-* IRC
->>>>>>> Claude
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-  (setq erc-server "irc.libera.chat"
-        erc-nick "juanpamf"    ; Change this!
-        erc-user-full-name "Juan Pablo Morales"  ; And this!
-        erc-track-shorten-start 8
-        erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters" "#emacs"))
-        erc-kill-buffer-on-part t
-        erc-auto-query 'bury)
-=======
-(use-package erc
-  :custom
-  (erc-server "irc.libera.chat")
-  (erc-nick "juanpamf")
-  (erc-user-full-name "Juan Pablo Morales")
-  (erc-track-shorten-start 8)
-  (erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters" "#emacs")))
-  (erc-kill-buffer-on-part t)
-  (erc-auto-query 'bury))
->>>>>>> Claude
->>>>>>> Claude
