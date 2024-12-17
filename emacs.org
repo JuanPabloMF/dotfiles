@@ -875,50 +875,50 @@ To be added
 ** In-buffer Completion
 
 #+begin_src emacs-lisp
-      (use-package corfu
+  (use-package corfu
 
-      ;; Optional customizations
-        :custom
-        (corfu-cycle t)                ;; Enable cycling for`corfu-next/previous'
-        (corfu-auto t)			  ;; Enable auto completion
-        (corfu-separator ?\s)          ;; Orderless field separator
-        (corfu-quit-at-boundary 'separator)   ;; Never quit at completion boundary
-        (corfu-quit-no-match 'separator)      ;; Never quit, even if there is no match
-        (corfu-preview-current 'insert)    ;; Disable current candidate preview
-        (corfu-auto-prefix 2)
-        (corfu-auto-delay 0.0)
+    ;; Optional customizations
+    :custom
+    (corfu-cycle t)                ;; Enable cycling for`corfu-next/previous'
+    ;; (corfu-auto t)			  ;; Enable auto completion
+    ;; (corfu-separator ?\s)          ;; Orderless field separator
+    ;; (corfu-quit-at-boundary 'separator)   ;; Never quit at completion boundary
+    ;; (corfu-quit-no-match 'separator)      ;; Never quit, even if there is no match
+    (corfu-preview-current 'insert)    ;; Disable current candidate preview
+    ;; (corfu-auto-prefix 2)
+    ;; (corfu-auto-delay 0.0)
 
-        :init
-        (global-corfu-mode)
-      ;; You may want to enable Corfu only for certain modes.
-      ;; :hook ((prog-mode . corfu-mode)
-      ;;        (shell-mode . corfu-mode)
-      ;;        (eshell-mode . corfu-mode))
+    :init
+    (global-corfu-mode)
+    ;; You may want to enable Corfu only for certain modes.
+    ;; :hook ((prog-mode . corfu-mode)
+    ;;        (shell-mode . corfu-mode)
+    ;;        (eshell-mode . corfu-mode))
 
-      ;; Recommended: Enable Corfu globally.
-      ;; This is recommended since dabbrev can be used globally (M-/).
+    ;; Recommended: Enable Corfu globally.
+    ;; This is recommended since dabbrev can be used globally (M-/).
+    )
+
+  ;; Use dabbrev with Corfu!
+  ;; (use-package dabbrev
+  ;;   :straight t
+  ;;   ;; Swap M-/ and C-M-/
+  ;;   :bind (("M-/" . dabbrev-completion)
+  ;;          ("C-M-/" . dabbrev-expand)))
+
+
+  ;;  Add extensions
+  (use-package cape
+    ;; Bind dedicated completion commands
+    ;; Alternative prefix keys: C-c p, M-p, M-+, ...
+    :init
+    ;; Add `completion-at-point-functions', used by `completion-at-point'.
+    (defun cape-dabbrev-codium ()
+      (cape-wrap-super #'cape-dabbrev #'codeium-completion-at-point)
       )
+    (add-to-list 'completion-at-point-functions #'codeium-completion-at-point)
 
-    ;; Use dabbrev with Corfu!
-    (use-package dabbrev
-      :straight t
-      ;; Swap M-/ and C-M-/
-      :bind (("M-/" . dabbrev-completion)
-             ("C-M-/" . dabbrev-expand)))
-
-
-        ;; Add extensions
-      (use-package cape
-        ;; Bind dedicated completion commands
-        ;; Alternative prefix keys: C-c p, M-p, M-+, ...
-        :init
-        ;; Add `completion-at-point-functions', used by `completion-at-point'.
-        (defun cape-dabbrev-codium ()
-  	(cape-wrap-super #'cape-dabbrev #'codeium-completion-at-point)
-  	)
-        (add-to-list 'completion-at-point-functions #'cape-dabbrev-codium)
-
-      )
+    )
 
   (use-package kind-icon
     :after corfu
@@ -1114,10 +1114,6 @@ To be added
     :ensure nil
     :hook
     (prog-mode . smerge-mode))
-  (use-package codeium
-
-    :straight '(:type git :host github :repo "Exafunction/codeium.el")
-    )
 
   (use-package aider
     :straight (:host github :repo "tninja/aider.el" :files ("aider.el"))
