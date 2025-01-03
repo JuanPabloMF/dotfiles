@@ -36,7 +36,7 @@
     :custom
     (use-package-ensure-function #'use-package-ensure-guix) 
 
-    (use-package-ensure-guix-profile "/home/juanpablo/.guix-profile")
+    (use-package-ensure-guix-profile "/home/juanpablo/.emacs.d/guix-profile")
 
     )
 
@@ -211,6 +211,15 @@
 #+begin_src emacs-lisp
   (setq gc-cons-threshold 100000000)
   (setq read-process-output-max (* 1024 1024))
+#+end_src
+
+** Shell env
+#+begin_src emacs-lisp
+  (use-package exec-path-from-shell
+    :ensure t
+    :if (memq window-system '(mac ns x))
+    :config
+    (exec-path-from-shell-initialize))
 #+end_src
 * Lisp
 ** Macros
@@ -1122,6 +1131,22 @@ To be added
     (setq aider-args '("--model" "anthropic/claude-3-5-sonnet-20241022"))
     ;;(setenv "ANTHROPIC_API_KEY" gptel-api-key)
     (global-set-key (kbd "C-c a") 'aider-transient-menu))
+
+
+  (use-package jsonrpc)
+  
+  (use-package copilot
+  :straight (:host github :repo "copilot-emacs/copilot.el" :files ("*.el"))
+  :after corfu
+  :custom
+  (copilot-node-executable "/home/juanpablo/.guix-profile/bin/node")
+  :hook (python-mode . copilot-mode)
+  :bind ((:map prog-mode-map
+               ("M-k" . copilot-complete))
+         (:map copilot-completion-map
+               ("M-l" . copilot-accept-completion)
+               ("M-1" . copilot-accept-completion-by-word)
+               ("M-2" . copilot-accept-completion-by-line))))
 #+end_src
 
 
