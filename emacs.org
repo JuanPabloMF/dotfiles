@@ -1,3 +1,4 @@
+
 #+PROPERTY: header-args:emacs-lisp :tangle /home/juanpablo/.emacs :results silent
 #+STARTUP: overview
 
@@ -8,18 +9,15 @@
 ** DONE save history
 * Base Config
 ** Package Management
-#+begin_src emacs-lisp
-(setq warning-minimum-level :error)
-#+end_src
 
 #+begin_src emacs-lisp
-
   (require 'package)
   (setq package-enable-at-startup nil)
   (add-to-list 'load-path "/home/juanpablo/.emacs.d/site-lisp/")
   (add-to-list 'load-path "/home/juanpablo/.guix-profile/share/emacs/site-lisp/")
   (let ((default-directory (expand-file-name "~/.emacs.d/site-lisp/")))
     (normal-top-level-add-subdirs-to-load-path))
+  (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
   (package-initialize)
   (require 's)
   (require 'use-package)
@@ -27,36 +25,103 @@
     :config
     (with-eval-after-load 'guix-repl
       (setq guix-guile-program  '("guix" "repl")
-      	  guix-config-scheme-compiled-directory  nil
-      	  guix-repl-use-latest  nil
-      	  guix-repl-use-server  nil))
+  	  guix-config-scheme-compiled-directory  nil
+  	  guix-repl-use-latest  nil
+  	  guix-repl-use-server  nil))
     (setq guix-ask-before-buffer-update nil)
     )
   (use-package use-package-ensure-guix
     :custom
     (use-package-ensure-function #'use-package-ensure-guix) 
-
     (use-package-ensure-guix-profile "/home/juanpablo/.guix-profile")
-
+    )
+  (setq  use-package-always-ensure t)
+  (use-package exec-path-from-shell
+    :config
+    (when (memq window-system '(mac ns x))
+      (exec-path-from-shell-initialize))
     )
 
-  (setq  use-package-always-ensure t)
+
+
 #+end_src
-#+begin_src emacs-lisp
-  (defvar bootstrap-version)
-  (let ((bootstrap-file
-  	   (expand-file-name "straight/repos/straight.el/bootstrap.el" user-emacs-directory))
-  	  (bootstrap-version 5))
-    (unless (file-exists-p bootstrap-file)
-      (with-current-buffer
-  	    (url-retrieve-synchronously
-  	     "https://raw.githubusercontent.com/raxod502/straight.el/develop/install.el"
-  	     'silent 'inhibit-cookies)
-  	  (goto-char (point-max))
-  	  (eval-print-last-sexp)))
-    (load bootstrap-file nil 'nomessage))
-  
-#+end_src
+
+
+
+  (setq package-enable-at-startup nil)
+
+        (defvar elpaca-installer-version 0.8)
+      (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
+      (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
+      (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
+      (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
+                                    :ref nil :depth 1
+                                    :files (:defaults "elpaca-test.el" (:exclude "extensions"))
+                                    :build (:not elpaca--activate-package)))
+      (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
+             (build (expand-file-name "elpaca/" elpaca-builds-directory))
+             (order (cdr elpaca-order))
+             (default-directory repo))
+        (add-to-list 'load-path (if (file-exists-p build) build repo))
+        (unless (file-exists-p repo)
+          (make-directory repo t)
+          (when (< emacs-major-version 28) (require 'subr-x))
+          (condition-case-unless-debug err
+              (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
+                        ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
+                                                        ,@(when-let* ((depth (plist-get order :depth)))
+                                                            (list (format "--depth=%d" depth) "--no-single-branch"))
+                                                        ,(plist-get order :repo) ,repo))))
+                        ((zerop (call-process "git" nil buffer t "checkout"
+                                              (or (plist-get order :ref) "--"))))
+                        (emacs (concat invocation-directory invocation-name))
+                        ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
+                                              "--eval" "(byte-recompile-directory \".\" 0 'force)")))
+                        ((require 'elpaca))
+                        ((elpaca-generate-autoloads "elpaca" repo)))
+                  (progn (message "%s" (buffer-string)) (kill-buffer buffer))
+                (error "%s" (with-current-buffer buffer (buffer-string))))
+            ((error) (warn "%s" err) (delete-directory repo 'recursive))))
+        (unless (require 'elpaca-autoloads nil t)
+          (require 'elpaca)
+          (elpaca-generate-autoloads "elpaca" repo)
+          (load "./elpaca-autoloads")))
+      (add-hook 'after-init-hook #'elpaca-process-queues)
+      (elpaca `(,@elpaca-order))
+
+        (add-to-list 'load-path "/home/juanpablo/.emacs.d/site-lisp/")
+        (add-to-list 'load-path "/home/juanpablo/.guix-profile/share/emacs/site-lisp/")
+        (let ((default-directory (expand-file-name "~/.emacs.d/site-lisp/")))
+          (normal-top-level-add-subdirs-to-load-path))
+
+        (use-package guix
+          :config
+          (with-eval-after-load 'guix-repl
+            (setq guix-guile-program  '("guix" "repl")
+        	  guix-config-scheme-compiled-directory  nil
+        	  guix-repl-use-latest  nil
+        	  guix-repl-use-server  nil))
+          (setq guix-ask-before-buffer-update nil)
+          )
+
+        (use-package use-package-ensure-guix
+          :custom
+          (use-package-ensure-function #'use-package-ensure-guix) 
+
+          (use-package-ensure-guix-profile "/home/juanpablo/.guix-profile")
+          :config
+          (setq  use-package-always-ensure t)
+          )
+
+        (use-package exec-path-from-shell
+          :config
+          (when (memq window-system '(mac ns x))
+            (exec-path-from-shell-initialize))
+          )
+
+
+
+
 ** UI
 *** Font
 #+begin_src emacs-lisp
@@ -430,15 +495,19 @@ enjoy using a lot.
 : t
 
 ** Hydras
+:PROPERTIES:
+:header-args:emacs-lisp: :tangle no
+:END:
+
 *** Window
 #+begin_src emacs-lisp
       (use-package hydra)
       (use-package pretty-hydra)
       (use-package windmove
-	:straight t)
+	:elpaca t)
       (use-package transpose-frame)
       (use-package headlong
-	:straight t)
+	:elpaca t)
       (winner-mode 1)
 
       ;;shameleslly taken from abo-abo's init files
@@ -583,10 +652,13 @@ To be added
  : t
 
 *** Prescient
+:PROPERTIES:
+:header-args:emacs-lisp: :tangle no
+:END:
 
 #+begin_src emacs-lisp
   (use-package ivy-prescient
-    :straight t
+    :elpaca t
     :after counsel
     :custom
     (ivy-prescient-enable-filtering nil)
@@ -650,28 +722,32 @@ To be added
 #+RESULTS:
 :
 ** Casual
+:PROPERTIES:
+:header-args:emacs-lisp: :tangle no
+:END:
+
 #+begin_src emacs-lisp
 
     (use-package re-builder
-      :straight t
+      :elpaca t
       :defer t)
 
   (use-package casual-lib
-      :straight (casual-lib :type git :host github :repo "kickingvegas/casual-lib")
+      :elpaca (casual-lib :host github :repo "kickingvegas/casual-lib")
       :after (re-builder))  
 
     (use-package casual-re-builder
-      :straight (casual-re-builder :type git :host github :repo "kickingvegas/casual-re-builder")
+      :elpaca (casual-re-builder :host github :repo "kickingvegas/casual-re-builder")
       :after (re-builder))
 
     (use-package  casual-dired
-      :straight (casual-dired :type git :host github :repo "kickingvegas/casual-dired"))
+      :elpaca (casual-dired :host github :repo "kickingvegas/casual-dired"))
 
     (use-package casual-info
-      :straight (casual-info :type git :host github :repo "kickingvegas/casual-info"))
+      :elpaca (casual-info :host github :repo "kickingvegas/casual-info"))
 
     (use-package casual-bookmarks
-      :straight (casual-bookmarks :type git :host github :repo "kickingvegas/casual-bookmarks"))
+      :elpaca (casual-bookmarks :host github :repo "kickingvegas/casual-bookmarks"))
 #+end_src
 * Editing
 ** Avy
@@ -836,9 +912,13 @@ To be added
 #+RESULTS:
 * IDE
 ** Shells
+:PROPERTIES:
+:header-args:emacs-lisp: :tangle no
+:END:
+
 #+begin_src emacs-lisp
   (use-package term
-    :straight t
+    :elpaca t
     :config
     (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
 
@@ -899,12 +979,12 @@ To be added
       ;; This is recommended since dabbrev can be used globally (M-/).
       )
 
-    ;; Use dabbrev with Corfu!
-    (use-package dabbrev
-      :straight t
-      ;; Swap M-/ and C-M-/
-      :bind (("M-/" . dabbrev-completion)
-             ("C-M-/" . dabbrev-expand)))
+    ;; ;; Use dabbrev with Corfu!
+    ;; (use-package dabbrev
+    ;;   :elpaca t
+    ;;   ;; Swap M-/ and C-M-/
+    ;;   :bind (("M-/" . dabbrev-completion)
+    ;;          ("C-M-/" . dabbrev-expand)))
 
 
         ;; Add extensions
@@ -1026,13 +1106,13 @@ To be added
 ** Python
 
 #+begin_src emacs-lisp
-  (use-package python-mode
-    :straight t
-    :hook (python-mode . lsp-deferred)
-    :custom
-    (dap-python-debugger 'debugpy)
-    :config
-    (require 'dap-python))
+  ;; (use-package python-mode
+  ;;   :elpaca t
+  ;;   :hook (python-mode . lsp-deferred)
+  ;;   :custom
+  ;;   (dap-python-debugger 'debugpy)
+  ;;   :config
+  ;;   (require 'dap-python))
 
   (use-package sphinx-doc
     :hook (python-mode . sphinx-doc-mode)
@@ -1075,16 +1155,16 @@ To be added
 
 ** GPTs
 #+begin_src emacs-lisp
-  (use-package elysium
-    :straight (elysium
-      	     :type git
-      	     :host github
-      	     :repo "lanceberge/elysium"
-      	     )
-    :custom
-    ;; Below are the default values
-    (elysium-window-size 0.33) ; The elysium buffer will be 1/3 your screen
-    (elysium-window-style 'vertical)) ; Can be customized to horizontal
+  ;; (use-package elysium
+  ;;   :elpaca (elysium
+      	    
+  ;;     	     :host github
+  ;;     	     :repo "lanceberge/elysium"
+  ;;     	     )
+  ;;   :custom
+  ;;   ;; Below are the default values
+  ;;   (elysium-window-size 0.33) ; The elysium buffer will be 1/3 your screen
+  ;;   (elysium-window-style 'vertical)) ; Can be customized to horizontal
 
   (defun get-authinfo-password (machine)
     "Read the contents of FILE-PATH and return it as a string."
@@ -1100,9 +1180,9 @@ To be added
     (get-authinfo-password "anthropic.com"))
 
   (use-package gptel
-    :custom
-    (gptel-model "claude-3-5-sonnet-20240620")
     :config
+    (setq gptel-use-curl nil)
+    (setq  gptel-model "claude-3-5-sonnet-20241022")
     (setq
      gptel-backend (gptel-make-anthropic "Claude"
                      :stream t
@@ -1114,18 +1194,31 @@ To be added
     :ensure nil
     :hook
     (prog-mode . smerge-mode))
-  (use-package codeium
 
-    :straight '(:type git :host github :repo "Exafunction/codeium.el")
-    )
+  (use-package copilot
+  :after corfu
+  :hook (python-mode . copilot-mode)
+  :custom
+  (copilot-node-executable "/home/juanpablo/.guix-profile/bin/node")
+  :bind ((:map prog-mode-map
+               ("M-k" . copilot-complete))
+         (:map copilot-completion-map
+               ("M-l" . copilot-accept-completion)
+               ("M-1" . copilot-accept-completion-by-word)
+               ("M-2" . copilot-accept-completion-by-line))))
 
-  (use-package aider
-    :straight (:host github :repo "tninja/aider.el" :files ("aider.el"))
-    :config
-    ;; Use claude-3-5-sonnet cause it is best in aider benchmark 
-    (setq aider-args '("--model" "anthropic/claude-3-5-sonnet-20241022"))
-    ;;(setenv "ANTHROPIC_API_KEY" gptel-api-key)
-    (global-set-key (kbd "C-c a") 'aider-transient-menu))
+  ;; (use-package codeium
+
+  ;;   :elpaca '(codeium :host github :repo "Exafunction/codeium.el")
+  ;;   )
+
+  ;; (use-package aider
+  ;;   :elpaca (:host github :repo "tninja/aider.el" :files ("aider.el"))
+  ;;   :config
+  ;;   ;; Use claude-3-5-sonnet cause it is best in aider benchmark 
+  ;;   (setq aider-args '("--model" "anthropic/claude-3-5-sonnet-20241022"))
+  ;;   ;;(setenv "ANTHROPIC_API_KEY" gptel-api-key)
+  ;;   (global-set-key (kbd "C-c a") 'aider-transient-menu))
 #+end_src
 
 
@@ -1198,8 +1291,8 @@ To be added
     (hide-lines-show-all)
     (org-show-all))
 
-  (use-package  command-log-mode
-    :straight t)
+  ;; (use-package  command-log-mode
+  ;;   :elpaca t)
 
 
   (use-package org-tree-slide
@@ -1277,16 +1370,20 @@ To be added
 ** IRC
 
 #+begin_src emacs-lisp
-  (use-package erc
-    :straight t
-    :custom
-    (erc-server "irc.libera.chat")
-    (erc-nick "juanpamf")
-    (erc-user-full-name "Juan Pablo Morales")
-    (erc-track-shorten-start 8)
-    (erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters" "#emacs")))
-    (erc-kill-buffer-on-part t)
-    (erc-auto-query 'bury))
+  ;; (use-package erc
+  ;;   :elpaca t
+  ;;   :custom
+  ;;   (erc-server "irc.libera.chat")
+  ;;   (erc-nick "juanpamf")
+  ;;   (erc-user-full-name "Juan Pablo Morales")
+  ;;   (erc-track-shorten-start 8)
+  ;;   (erc-autojoin-channels-alist '(("irc.libera.chat" "#systemcrafters" "#emacs")))
+  ;;   (erc-kill-buffer-on-part t)
+  ;;   (erc-auto-query 'bury))
 
 
 #+end_src
+
+
+
+
