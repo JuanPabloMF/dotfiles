@@ -2,6 +2,7 @@
 #+STARTUP: overview
 
 * Ideas
+** TODO Add guix home config
 ** TODO filter/sort buffers  per "app"
 ** TODO manage better the "C-x <-" behavior (guessing buffer you wanna go)
 ** TODO leave anchors you can quickly move to (like C-x C-x)->see registers
@@ -1075,9 +1076,12 @@ To be added
 : t
 
 #+begin_src emacs-lisp
-  (use-package jupyter)
+        (use-package jupyter
+          :custom
+          (jupyter-eval-use-overlays t)
+  	)
 
-  (use-package pyvenv)
+        (use-package pyvenv)
 #+end_src
 
 #+RESULTS:
