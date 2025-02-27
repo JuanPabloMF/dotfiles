@@ -1,7 +1,7 @@
 #+PROPERTY: header-args:emacs-lisp :tangle /home/juanpablo/.emacs :results silent
 #+STARTUP: overview
-
 * Ideas
+
 ** TODO Add guix home config
 ** TODO filter/sort buffers  per "app"
 ** TODO manage better the "C-x <-" behavior (guessing buffer you wanna go)
@@ -25,6 +25,8 @@
   (require 's)
   (require 'use-package)
   (use-package guix
+    :custom
+    
     :config
     (with-eval-after-load 'guix-repl
       (setq guix-guile-program  '("guix" "repl")
@@ -35,11 +37,11 @@
     )
   (use-package use-package-ensure-guix
     :custom
-    (use-package-ensure-function #'use-package-ensure-guix) 
+    (use-package-ensure-function #'use-package-ensure-guix)
+    (use-package-ensure-guix-profile "/home/juanpablo/.guix-home/profile")
+    :config
+    (setq guix-current-profile "/home/juanpablo/.guix-home/profile"))
 
-    (use-package-ensure-guix-profile "/home/juanpablo/.emacs.d/guix-profile")
-
-    )
 
   (setq  use-package-always-ensure t)
 #+end_src
@@ -1114,7 +1116,7 @@ To be added
 
   (use-package gptel
     :custom
-    (gptel-model "claude-3-5-sonnet-20240620")
+    (gptel-model "claude-3-7-sonnet-20250219")
     :config
     (setq
      gptel-backend (gptel-make-anthropic "Claude"
@@ -1314,4 +1316,12 @@ To be added
     (erc-auto-query 'bury))
 
 
+#+end_src
+
+* Misc
+
+** Org-chef
+
+#+begin_src emacs-lisp
+(use-package org-chef)
 #+end_src
