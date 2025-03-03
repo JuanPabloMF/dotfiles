@@ -30,10 +30,11 @@
   	  guix-repl-use-server  nil))
     (setq guix-ask-before-buffer-update nil)
     )
+  (setq  guix-current-profile "/home/juanpablo/.guix-home/profile")
   (use-package use-package-ensure-guix
     :custom
     (use-package-ensure-function #'use-package-ensure-guix) 
-    (use-package-ensure-guix-profile "/home/juanpablo/.guix-profile")
+    (use-package-ensure-guix-profile "/home/juanpablo/.guix-home/profile")
     )
   (setq  use-package-always-ensure t)
   (use-package exec-path-from-shell
