@@ -1,4 +1,3 @@
-
 #+PROPERTY: header-args:emacs-lisp :tangle /home/juanpablo/.emacs :results silent
 #+STARTUP: overview
 

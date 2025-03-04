@@ -12,7 +12,24 @@
 	     (gnu packages python-xyz)
 	     (gnu packages texlive)
 	     (packages copilot)
+	     (guix transformations)
+	     (guix packages)
+	     (srfi srfi-1)
+             (guix build-system emacs)
 	     )
+
+(define transform-gptel
+  (options->transformation
+   '((with-commit . "emacs-gptel=2bb081e55e33b3df2b60d51d988713d9470e7d6c"))))
+
+(define gptel-without-compilation
+  (package
+    (inherit (transform-gptel emacs-gptel))
+    (build-system emacs-build-system)
+    (arguments
+     `(#:phases
+       (modify-phases %standard-phases
+         (delete 'byte-compile))))))
 
 (home-environment
  (packages (list emacs
@@ -46,7 +63,6 @@
                  emacs-flycheck
                  emacs-fontaine
                  emacs-general
-                 emacs-gptel
                  emacs-guix
                  emacs-hide-lines
                  emacs-hydra
@@ -93,4 +109,10 @@
                  python-lsp-server
 		 texlive
 		 emacs-transient
-		 emacs-copilot)))
+		 emacs-copilot
+		 emacs-gptel
+		 ;; gptel-without-compilation
+		 ;; ((options->transformation
+		 ;;   '((with-commit . "emacs-gptel=2bb081e")))
+		 ;;  emacs-gptel))
+		 )))
