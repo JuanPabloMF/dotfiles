@@ -16,20 +16,25 @@
 	     (guix packages)
 	     (srfi srfi-1)
              (guix build-system emacs)
+	     (guix build-system gnu)
+	     (guix build-system copy)
 	     )
+
 
 (define transform-gptel
   (options->transformation
    '((with-commit . "emacs-gptel=2bb081e55e33b3df2b60d51d988713d9470e7d6c"))))
 
+(define gptel-package
+  (transform-gptel emacs-gptel))
+
 (define gptel-without-compilation
   (package
-    (inherit (transform-gptel emacs-gptel))
-    (build-system emacs-build-system)
+    (inherit gptel-package)
+    (build-system copy-build-system)
     (arguments
-     `(#:phases
-       (modify-phases %standard-phases
-         (delete 'byte-compile))))))
+     `(#:install-plan
+       '(("." "share/emacs/site-lisp/"))))))  ;; Copy the entire directory
 
 (home-environment
  (packages (list emacs
@@ -110,8 +115,8 @@
 		 texlive
 		 emacs-transient
 		 emacs-copilot
-		 emacs-gptel
-		 ;; gptel-without-compilation
+		 ;; emacs-gptel
+		 gptel-without-compilation
 		 ;; ((options->transformation
 		 ;;   '((with-commit . "emacs-gptel=2bb081e")))
 		 ;;  emacs-gptel))
