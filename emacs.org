@@ -22,11 +22,12 @@
   (require 'use-package)
   (use-package guix
     :config
-    (with-eval-after-load 'guix-repl
+    (with-eval-
+     after-load 'guix-repl
       (setq guix-guile-program  '("guix" "repl")
-  	  guix-config-scheme-compiled-directory  nil
-  	  guix-repl-use-latest  nil
-  	  guix-repl-use-server  nil))
+	  guix-config-scheme-compiled-directory  nil
+	  guix-repl-use-latest  nil
+	  guix-repl-use-server  nil))
     (setq guix-ask-before-buffer-update nil)
     )
   (setq  guix-current-profile "/home/juanpablo/.guix-home/profile")
@@ -1176,13 +1177,15 @@ To be added
               secret)
       	  )
         (message "No matching auth info found."))))
-  (defun gptel-api-key ()
+  (defun gptel-api-key ()			
     (get-authinfo-password "anthropic.com"))
 
   (use-package gptel
+    :init
+    (require 'gptel-anthropic)
     :config
     (setq gptel-use-curl nil)
-    (setq  gptel-model "claude-3-7-sonnet-20250219")
+    (setq  gptel-model 'claude-3-7-sonnet-20250219)
     (setq
      gptel-backend (gptel-make-anthropic "Claude"
                      :stream t
