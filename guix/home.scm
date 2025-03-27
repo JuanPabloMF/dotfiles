@@ -1,6 +1,7 @@
 (use-modules (gnu home)
              (gnu home services)
              (gnu packages)
+	     (gnu services)
 	     (gnu packages emacs)
              (gnu packages emacs-xyz)
              (gnu packages fonts)
@@ -17,21 +18,26 @@
              (guix build-system emacs)
 	     (guix build-system gnu)
 	     (guix build-system copy)
-	     (packages copilot)
+	     (packages ai)
 	     (packages ensure-guix)
+	     (gnu packages networking)
+	     (gnu packages mail)
+	     (gnu packages curl)
+	     ;; (gnu home services desktop)
+	     ;; (gnu services desktop)
 	     )
 
 
 (define transform-gptel
   (options->transformation
-   '((with-commit . "emacs-gptel=2bb081e55e33b3df2b60d51d988713d9470e7d6c"))))
+   '((with-commit . "emacs-gptel=075376c002d0f0c50e68ffd23c647eeab27fea73"))))
 
 (define gptel-package
   (transform-gptel emacs-gptel))
 
 (define gptel-without-compilation
   (package
-   (inherit gptel-package)
+   (inherit emacs-gptel)
    (build-system copy-build-system)
    (arguments
     `(#:install-plan
@@ -39,7 +45,8 @@
 
 (home-environment
  (packages
-  (list emacs
+  (list emacs-next
+        emacs
 	git
 	emacs-use-package-ensure-guix
         emacs-ace-window
@@ -105,7 +112,7 @@
         emacs-swiper
         emacs-transpose-frame
         emacs-use-package
-	n                 emacs-which-key
+        emacs-which-key
         emacs-yasnippet
         ;; font-aporetic
         font-iosevka
@@ -120,22 +127,30 @@
 	emacs-copilot
 	;; emacs-gptel
 	gptel-without-compilation
+	emacs-claude-code
+	mu
+	;; emacs-transient
+	;; claude-code-cli
+	;; (specification->package "claude-code-cli@0.1.0")
 	;; ((options->transformation
 	;;   '((with-commit . "emacs-gptel=2bb081e")))
 	;;  emacs-gptel))
+	blueman
+	curl
 	))
- (services
-  (list
-   (simple-service
-    'desktop-entries
-    home-desktop-entries-service-type
-    (list
-     (desktop-entyr
-      (name "Emacs")
-      (exec "bash -l -c 'emacs %F'")
-      (comment "GNU Emacs")
-      (type "Application")
-      (icon "emacs")
-      (categories '("Development" "TextEditor"))
-      (terminal #f))))))
- )
+ ;; (services
+ ;;  (list
+ ;;   (simple-service
+ ;;    'desktop-entries
+ ;;    home-desktop-entries-service-type
+ ;;    (list
+ ;;     (desktop-entyr
+ ;;      (name "Emacs")
+ ;;      (exec "bash -l -c 'emacs %F'")
+ ;;      (comment "GNU Emacs")
+ ;;      (type "Application")
+ ;;      (icon "emacs")
+ ;;      (categories '("Development" "TextEditor"))
+ ;;      (terminal #f))))))
+ ;; )
+)
