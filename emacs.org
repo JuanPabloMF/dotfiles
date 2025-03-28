@@ -1122,6 +1122,7 @@ To be added
               ;; ("\\.ipynb\\'" . python-mode)  ;; Add this line for ipynb files
     :interpreter ("python" . python-mode)
     :config
+    (setq python-shell-interpreter "/home/juanpablo/.guix-home/profile/bin/python3")
     ;; Enable syntax highlighting
     (setq python-indent-offset 4)
     (setq font-lock-maximum-decoration t)
@@ -1139,6 +1140,14 @@ To be added
   ;; Install jupyter package
   (use-package jupyter)
 
+  ;; have to see why I need ensure nil here (ensure-package-ensure-guix behavior)
+  (use-package drepl
+    :ensure nil
+    :init
+    (require 'drepl-ipython)
+    :config
+    (defvaralias 'python-interpreter 'python-shell-interpreter)
+  )
 
   (use-package code-cells
     :init
