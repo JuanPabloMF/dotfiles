@@ -443,6 +443,7 @@ enjoy using a lot.
        "C-c p" 'projectile-command-map
        ;; "C-c b" 'my/eaf-open-browser	
        ;; "C-c B" 'hydra-browser/body
+       "C-c g" 'gptel-menu
        "C-c e" 'elfeed
        "C-c y w" 'aya-create
        "C-c y y" 'aya-expand
@@ -1257,6 +1258,36 @@ To be added
                      :key (get-authinfo-password "anthropic.com")
               	   ))
     )
+
+  ;; Add this to your init.el
+
+(with-eval-after-load 'gptel-transient
+  ;; Define the suffix command
+  (transient-define-suffix gptel--suffix-jump-to-gptel-buffer ()
+    "Jump to an existing gptel buffer or create a new one."
+    :key "j"
+    :description "Jump to gptel buffer"
+    :transient nil
+    (interactive)
+    (let* ((gptel-buffers (cl-loop for buf in (buffer-list)
+                                   when (buffer-local-value 'gptel-mode buf)
+                                   collect (buffer-name buf)))
+           (default-name (concat "*" (gptel-backend-name gptel-backend) "*"))
+           (buffer-name (completing-read 
+                         (format "GPTel buffer (default %s): " default-name)
+                         gptel-buffers
+                         nil nil nil nil
+                         default-name)))
+      (gptel buffer-name)))
+  
+  ;; Add the suffix to the gptel-menu transient
+  (transient-append-suffix 'gptel-menu
+    '(0 0 0) ; This targets the suffix after the first suffix in the first group
+    '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer)))
+
+;; Alternatively, if you want to place it in a specific section, you can use something like:
+;; (transient-append-suffix 'gptel-menu '("SPC") 
+;;   '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer))
 
   (use-package smerge-mode
     :ensure nil
