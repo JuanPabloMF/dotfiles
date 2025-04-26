@@ -13,7 +13,7 @@
   (require 'package)
   (setq package-enable-at-startup nil)
   (add-to-list 'load-path "/home/juanpablo/.emacs.d/site-lisp/")
-  (add-to-list 'load-path "/home/juanpablo/.guix-profile/share/emacs/site-lisp/")
+  ;; (add-to-list 'load-path "/home/juanpablo/.guix-profile/share/emacs/site-lisp/")
   (let ((default-directory (expand-file-name "~/.emacs.d/site-lisp/")))
     (normal-top-level-add-subdirs-to-load-path))
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
@@ -30,6 +30,7 @@
     (setq guix-ask-before-buffer-update nil)
     )
   (setq  guix-current-profile "/home/juanpablo/.guix-home/profile")
+  (setenv "GUIX_PROFILE" (expand-file-name "~/.guix-home/profile"))
   (use-package use-package-ensure-guix
     :custom
     (use-package-ensure-function #'use-package-ensure-guix) 
@@ -37,11 +38,7 @@
     )
   (setq  use-package-always-ensure t)
 
-  (use-package exec-path-from-shell
-    :config
-    (when (memq window-system '(mac ns x))
-      (exec-path-from-shell-initialize))
-    )
+
 
 
 
@@ -378,6 +375,12 @@ enjoy using a lot.
                      (deactivate-mark)
                      (swiper-isearch-backward region))
                  (swiper-isearch-backward))))))
+
+  (defun my/jump-to-register-end-of-line (register)
+    "Jump to a register position and then move to end of that line."
+    (interactive "cJump to register and end of line: ")
+    (jump-to-register register)
+    (end-of-line))
 #+end_src
 
 #+RESULTS:
@@ -422,75 +425,77 @@ enjoy using a lot.
 ** General
 #+begin_src emacs-lisp
 
-  ;; Emacs oriented keybinding. Do good, not evil!
-  ;; An interesting link for this is
-  ;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
+        ;; Emacs oriented keybinding. Do good, not evil!
+        ;; An interesting link for this is
+        ;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
 
-  (use-package general
-    :config
-    (my/general-define-key
-     (("M-w" 'easy-kill
-       "C-@" 'er/expand-region
-       "C-s" 'my/swiper-isearch-dwim
-       "M-s" 'swiper
-       "C-M-s" 'avy-goto-char
-       "C-x o" 'other-window
-       "M-o" 'ace-window 
-       "C-x C-b" 'persp-counsel-switch-buffer
-       ;; "C-x x" 'persp-mode-prefix-key
-       )
-      ("C-c w" 'hydra-window/body
-       "C-c p" 'projectile-command-map
-       ;; "C-c b" 'my/eaf-open-browser	
-       ;; "C-c B" 'hydra-browser/body
-       "C-c g" 'gptel-menu
-       "C-c e" 'elfeed
-       "C-c y w" 'aya-create
-       "C-c y y" 'aya-expand
-       "C-c y l" 'ivy-yasnippet
-       "C-c y s" 'aya-persist-snippet
-       "C->" 'mc/mark-next-like-this
-       "C-<" 'mc/mark-previous-like-this
-       "C-c C->" 'mc/mark-all-like-this
-       "C-S-c C-S-c" 'mc/edit-lines
-       )
-      (lsp-mode-map
-       "C-c l u r" 'lsp-ui-peek-find-references
-       "C-c l u d" 'lsp-ui-peek-find-definitions
-       "C-c l u g" 'lsp-ui-doc-glance
-       "C-c l u f" 'lsp-ui-doc-focus-frame
-       "C-c l u m" 'lsp-ui-imenu
-       "C-c l u t" 'lsp-treemacs-symbols
-       )
-      (python-mode-map
-       "C-M-b" 'python-nav-backward-block
-       "C-M-f" 'python-nav-forward-block
-       "C-M-a" 'python-nav-backward-defun
-       "C-M-e" 'python-nav-forward-defun
-       "C-M-u" 'python-nav-up-list
-       "\r" 'newline-and-indent
-       )
-      (minibuffer-local-map
-       "C-r" 'counsel-minibuffer-history)
+        (use-package general
+          :config
+          (my/general-define-key
+           (("M-w" 'easy-kill
+             "C-@" 'er/expand-region
+             "C-s" 'my/swiper-isearch-dwim
+             "M-s" 'swiper
+             "C-M-s" 'avy-goto-char
+             "C-x o" 'other-window
+             "M-o" 'ace-window 
+             "C-x C-b" 'persp-counsel-switch-buffer
+             "C-c r e" 'jump-to-register-end-of-line
+             ;; "C-x x" 'persp-mode-prefix-key
+             )
+            ("C-c a" 'aider-transient-menu
+  	   "C-c w" 'hydra-window/body
+    	 "C-c p" 'projectile-command-map
+             ;; "C-c b" 'my/eaf-open-browser	
+             ;; "C-c B" 'hydra-browser/body
+             "C-c g" 'gptel-menu
+             "C-c e" 'elfeed
+             "C-c y w" 'aya-create
+             "C-c y y" 'aya-expand
+             "C-c y l" 'ivy-yasnippet
+             "C-c y s" 'aya-persist-snippet
+             "C->" 'mc/mark-next-like-this
+             "C-<" 'mc/mark-previous-like-this
+             "C-c C->" 'mc/mark-all-like-this
+             "C-S-c C-S-c" 'mc/edit-lines
+             )
+            (lsp-mode-map
+             "C-c l u r" 'lsp-ui-peek-find-references
+             "C-c l u d" 'lsp-ui-peek-find-definitions
+             "C-c l u g" 'lsp-ui-doc-glance
+             "C-c l u f" 'lsp-ui-doc-focus-frame
+             "C-c l u m" 'lsp-ui-imenu
+             "C-c l u t" 'lsp-treemacs-symbols
+             )
+            (python-mode-map
+             "C-M-b" 'python-nav-backward-block
+             "C-M-f" 'python-nav-forward-block
+             "C-M-a" 'python-nav-backward-defun
+             "C-M-e" 'python-nav-forward-defun
+             "C-M-u" 'python-nav-up-list
+             "\r" 'newline-and-indent
+             )
+            (minibuffer-local-map
+             "C-r" 'counsel-minibuffer-history)
 
-       (dired-mode-map
-              "C-o" 'casual-dired-tmenu
-              "s" 'casual-dired-sort-by-tmenu
-              "/" 'casual-dired-search-replace-tmenu)
+             (dired-mode-map
+                    "C-o" 'casual-dired-tmenu
+                    "s" 'casual-dired-sort-by-tmenu
+                    "/" 'casual-dired-search-replace-tmenu)
 
-            (Info-mode-map 
-              "C-o" 'casual-info-tmenu)
+                  (Info-mode-map 
+                    "C-o" 'casual-info-tmenu)
 
-            (bookmark-bmenu-mode-map
-              "C-o" 'casual-bookmarks-tmenu
-              "S" 'casual-bookmarks-sortby-tmenu
-              "J" 'bookmark-jump)
+                  (bookmark-bmenu-mode-map
+                    "C-o" 'casual-bookmarks-tmenu
+                    "S" 'casual-bookmarks-sortby-tmenu
+                    "J" 'bookmark-jump)
 
-            (reb-mode-map 
-              "C-o" 'casual-re-builder-tmenu)
+                  (reb-mode-map 
+                    "C-o" 'casual-re-builder-tmenu)
 
-            
-  )))
+                  
+        )))
 #+end_src
 
 #+RESULTS:
@@ -827,7 +832,7 @@ To be added
     (tramp-set-completion-function "sshxa" tramp-completion-function-alist-ssh))
 
   (use-package docker-tramp)
-  
+
   (defun my/find-package-path (package-name)
     "Find the installation path of a given PACKAGE-NAME."
     (let ((package-desc (cadr (assq package-name package-alist))))
@@ -835,11 +840,13 @@ To be added
   	(package-desc-dir package-desc)
         (message "Package '%s' not found!" package-name))))
 
+  ;; (setq tramp-default-remote-shell "/bin/sh")
+  ;; (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 #+end_src
 
 #+RESULTS:
-: remote-shell
-* Org
+: remote-shell*
+ Org
 
 #+begin_src emacs-lisp
   (defun efs/org-font-setup ()
@@ -1216,132 +1223,147 @@ To be added
 ** GPTs and AI
 #+begin_src emacs-lisp
 
-  ;; This could be simplified by just calling (make-*) and setting .authinfo with api endpoint and apikey as USER
-  (defun get-authinfo-password (machine)
-    "Read the contents of FILE-PATH and return it as a string."
-    (let ((auth-info (auth-source-search :host machine)))
-      (if auth-info
-          (let ((secret (plist-get (car auth-info) :secret)))
-            (if (functionp secret)
-                (funcall secret)
-              secret)
-            )
-        (message "No matching auth info found."))))
+    ;; This could be simplified by just calling (make-*) and setting .authinfo with api endpoint and apikey as USER
+    (defun get-authinfo-password (machine)
+      "Read the contents of FILE-PATH and return it as a string."
+      (let ((auth-info (auth-source-search :host machine)))
+        (if auth-info
+            (let ((secret (plist-get (car auth-info) :secret)))
+              (if (functionp secret)
+                  (funcall secret)
+                secret)
+              )
+          (message "No matching auth info found."))))
 
 
 
-  (defun load-all-gptel-modules ()
-  "Find and require all gptel-* modules."
-  (interactive)
-  (let* ((gptel-dir (file-name-directory (locate-library "gptel")))
-         (gptel-files (directory-files gptel-dir t "^gptel-.*\\.el$")))
-    (dolist (file gptel-files)
-      (let ((feature (intern (file-name-sans-extension (file-name-nondirectory file)))))
-        (message "Loading %s..." feature)
-        (require feature nil t)))))
-
-
-  (use-package gptel
-    :init
-    (load-all-gptel-modules)
-    :config
-    ;; (setq gptel-use-curl nil)
-    (setq gptel-track-media t)
-    (setq  gptel-model 'claude-3-7-sonnet-20250219)
-    (gptel-make-gemini "Gemini"
-      :stream t
-      :key (get-authinfo-password "gemini.com")
-      )
-    (setq
-     gptel-backend (gptel-make-anthropic "Claude"
-                     :stream t
-                     :key (get-authinfo-password "anthropic.com")
-              	   ))
-    )
-
-  ;; Add this to your init.el
-
-(with-eval-after-load 'gptel-transient
-  ;; Define the suffix command
-  (transient-define-suffix gptel--suffix-jump-to-gptel-buffer ()
-    "Jump to an existing gptel buffer or create a new one."
-    :key "j"
-    :description "Jump to gptel buffer"
-    :transient nil
+    (defun load-all-gptel-modules ()
+    "Find and require all gptel-* modules."
     (interactive)
-    (let* ((gptel-buffers (cl-loop for buf in (buffer-list)
-                                   when (buffer-local-value 'gptel-mode buf)
-                                   collect (buffer-name buf)))
-           (default-name (concat "*" (gptel-backend-name gptel-backend) "*"))
-           (buffer-name (completing-read 
-                         (format "GPTel buffer (default %s): " default-name)
-                         gptel-buffers
-                         nil nil nil nil
-                         default-name)))
-      (gptel buffer-name)))
-  
-  ;; Add the suffix to the gptel-menu transient
-  (transient-append-suffix 'gptel-menu
-    '(0 0 0) ; This targets the suffix after the first suffix in the first group
-    '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer)))
-
-;; Alternatively, if you want to place it in a specific section, you can use something like:
-;; (transient-append-suffix 'gptel-menu '("SPC") 
-;;   '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer))
-
-  (use-package smerge-mode
-    :ensure nil
-    :hook
-    (prog-mode . smerge-mode))
-
-  (use-package copilot
-    :after corfu
-    :hook (python-mode . copilot-mode)
-    :custom
-    (copilot-node-executable "/home/juanpablo/.guix-home/profile/bin/node")
-    :bind ((:map prog-mode-map
-                 ("M-k" . copilot-complete))
-           (:map copilot-completion-map
-                 ("M-l" . copilot-accept-completion)
-                 ("M-1" . copilot-accept-completion-by-word)
-                 ("M-2" . copilot-accept-completion-by-line))))
+    (let* ((gptel-dir (file-name-directory (locate-library "gptel")))
+           (gptel-files (directory-files gptel-dir t "^gptel-.*\\.el$")))
+      (dolist (file gptel-files)
+        (let ((feature (intern (file-name-sans-extension (file-name-nondirectory file)))))
+          (message "Loading %s..." feature)
+          (require feature nil t)))))
 
 
-  (use-package claude-code
+    (use-package gptel
+      :init
+      (load-all-gptel-modules)
+      :config
+      ;; (setq gptel-use-curl nil)
+      (setq gptel-track-media t)
+      (setq  gptel-model 'claude-3-7-sonnet-20250219)
+      (gptel-make-gemini "Gemini"
+        :stream t
+        :key (get-authinfo-password "gemini.com")
+        )
+      (setq
+       gptel-backend (gptel-make-anthropic "Claude"
+                       :stream t
+                       :key (get-authinfo-password "anthropic.com")
+                	   ))
+      )
+
+    ;; Add this to your init.el
+
+  (with-eval-after-load 'gptel-transient
+    ;; Define the suffix command
+    (transient-define-suffix gptel--suffix-jump-to-gptel-buffer ()
+      "Jump to an existing gptel buffer or create a new one."
+      :key "j"
+      :description "Jump to gptel buffer"
+      :transient nil
+      (interactive)
+      (let* ((gptel-buffers (cl-loop for buf in (buffer-list)
+                                     when (buffer-local-value 'gptel-mode buf)
+                                     collect (buffer-name buf)))
+             (default-name (concat "*" (gptel-backend-name gptel-backend) "*"))
+             (buffer-name (completing-read 
+                           (format "GPTel buffer (default %s): " default-name)
+                           gptel-buffers
+                           nil nil nil nil
+                           default-name)))
+        (gptel buffer-name)))
+    
+    ;; Add the suffix to the gptel-menu transient
+    (transient-append-suffix 'gptel-menu
+      '(0 0 0) ; This targets the suffix after the first suffix in the first group
+      '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer)))
+
+  ;; Alternatively, if you want to place it in a specific section, you can use something like:
+  ;; (transient-append-suffix 'gptel-menu '("SPC") 
+  ;;   '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer))
+
+    (use-package smerge-mode
+      :ensure nil
+      :hook
+      (prog-mode . smerge-mode))
+
+    (use-package copilot
+      :after corfu
+      :hook (python-mode . copilot-mode)
+      :custom
+      (copilot-node-executable "/home/juanpablo/.guix-home/profile/bin/node")
+      :bind ((:map prog-mode-map
+                   ("M-k" . copilot-complete))
+             (:map copilot-completion-map
+                   ("M-l" . copilot-accept-completion)
+                   ("M-1" . copilot-accept-completion-by-word)
+                   ("M-2" . copilot-accept-completion-by-line))))
+
+
+    (use-package claude-code
+      :config
+      (add-to-list 'exec-path "/home/juanpablo/.npm-global/bin")
+      (setq claude-code-program (executable-find "claude"))
+      )
+
+  (use-package aider
     :config
-    (add-to-list 'exec-path "/home/juanpablo/.npm-global/bin")
-    (setq claude-code-program (executable-find "claude"))
+    ;; For latest claude sonnet model
+    (setq aider-args '("--model" "sonnet" "--no-auto-accept-architect"))
+    (setenv "ANTHROPIC_API_KEY" (get-authinfo-password "anthropic.com"))
+    ;; Or chatgpt model
+    ;; (setq aider-args '("--model" "o4-mini"))
+    ;; (setenv "OPENAI_API_KEY" <your-openai-api-key>)
+    ;; Or gemini model
+    ;; (setq aider-args '("--model" "gemini-exp"))
+    ;; (setenv "GEMINI_API_KEY" <your-gemini-api-key>)
+    ;; Or use your personal config file
+    ;; (setq aider-args `("--config" ,(expand-file-name "~/.aider.conf.yml")))
+    ;; ;;
+    ;; Optional: Set a key binding for the transient menu
     )
+    ;; (use-package elysium
+    ;;   :elpaca (elysium
 
-
-  ;; (use-package elysium
-  ;;   :elpaca (elysium
-
-  ;;     	     :host github
-  ;;     	     :repo "lanceberge/elysium"
-  ;;     	     )
-  ;;   :custom
-  ;;   ;; Below are the default values
-  ;;   (elysium-window-size 0.33) ; The elysium buffer will be 1/3 your screen
-  ;;   (elysium-window-style 'vertical)) ; Can be customized to horizontal
+    ;;     	     :host github
+    ;;     	     :repo "lanceberge/elysium"
+    ;;     	     )
+    ;;   :custom
+    ;;   ;; Below are the default values
+    ;;   (elysium-window-size 0.33) ; The elysium buffer will be 1/3 your screen
+    ;;   (elysium-window-style 'vertical)) ; Can be customized to horizontal
 
 
 
-  ;; (use-package codeium
+    ;; (use-package codeium
 
-  ;;   :elpaca '(codeium :host github :repo "Exafunction/codeium.el")
-  ;;)
+    ;;   :elpaca '(codeium :host github :repo "Exafunction/codeium.el")
+    ;;)
 
 
-  ;; (use-package aider
-  ;;   :elpaca (:host github :repo "tninja/aider.el" :files ("aider.el"))
-  ;;   :config
-  ;;   ;; Use claude-3-5-sonnet cause it is best in aider benchmark 
-  ;;   (setq aider-args '("--model" "anthropic/claude-3-5-sonnet-20241022"))
-  ;;   ;;(setenv "ANTHROPIC_API_KEY" gptel-api-key)
-  ;;   (global-set-key (kbd "C-c a") 'aider-transient-menu))
+    ;; (use-package aider
+    ;;   :elpaca (:host github :repo "tninja/aider.el" :files ("aider.el"))
+    ;;   :config
+    ;;   ;; Use claude-3-5-sonnet cause it is best in aider benchmark 
+    ;;   (setq aider-args '("--model" "anthropic/claude-3-5-sonnet-20241022"))
+    ;;   ;;(setenv "ANTHROPIC_API_KEY" gptel-api-key)
+    ;;   (global-set-key (kbd "C-c a") 'aider-transient-menu))
 
-  ;; (use-package transient)
+    ;; (use-package transient)
 
 
 #+end_src
