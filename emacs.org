@@ -8,7 +8,7 @@
 ** DONE save history
 * Base Config
 ** Package Management
-
+*** Guix bootstrapping
 #+begin_src emacs-lisp
   (require 'package)
   (setq package-enable-at-startup nil)
@@ -43,7 +43,7 @@
 
 
 #+end_src
-
+*** Straight bootstrapping
 #+begin_src emacs-lisp
   (defvar bootstrap-version)
   (let ((bootstrap-file
@@ -60,89 +60,7 @@
         (goto-char (point-max))
         (eval-print-last-sexp)))
     (load bootstrap-file nil 'nomessage))
-
-  (use-package wingman
-  :straight (:type git :host github :repo "mjrusso/wingman")
-  :hook (prog-mode . wingman-mode)
-  :config
-  ;; Add your custom configuration here
-  (setq wingman-model-name "llama3:latest")
-  )
 #+end_src
-
-  (setq package-enable-at-startup nil)
-
-        (defvar elpaca-installer-version 0.8)
-      (defvar elpaca-directory (expand-file-name "elpaca/" user-emacs-directory))
-      (defvar elpaca-builds-directory (expand-file-name "builds/" elpaca-directory))
-      (defvar elpaca-repos-directory (expand-file-name "repos/" elpaca-directory))
-      (defvar elpaca-order '(elpaca :repo "https://github.com/progfolio/elpaca.git"
-                                    :ref nil :depth 1
-                                    :files (:defaults "elpaca-test.el" (:exclude "extensions"))
-                                    :build (:not elpaca--activate-package)))
-      (let* ((repo  (expand-file-name "elpaca/" elpaca-repos-directory))
-             (build (expand-file-name "elpaca/" elpaca-builds-directory))
-             (order (cdr elpaca-order))
-             (default-directory repo))
-        (add-to-list 'load-path (if (file-exists-p build) build repo))
-        (unless (file-exists-p repo)
-          (make-directory repo t)
-          (when (< emacs-major-version 28) (require 'subr-x))
-          (condition-case-unless-debug err
-              (if-let* ((buffer (pop-to-buffer-same-window "*elpaca-bootstrap*"))
-                        ((zerop (apply #'call-process `("git" nil ,buffer t "clone"
-                                                        ,@(when-let* ((depth (plist-get order :depth)))
-                                                            (list (format "--depth=%d" depth) "--no-single-branch"))
-                                                        ,(plist-get order :repo) ,repo))))
-                        ((zerop (call-process "git" nil buffer t "checkout"
-                                              (or (plist-get order :ref) "--"))))
-                        (emacs (concat invocation-directory invocation-name))
-                        ((zerop (call-process emacs nil buffer nil "-Q" "-L" "." "--batch"
-                                              "--eval" "(byte-recompile-directory \".\" 0 'force)")))
-                        ((require 'elpaca))
-                        ((elpaca-generate-autoloads "elpaca" repo)))
-                  (progn (message "%s" (buffer-string)) (kill-buffer buffer))
-                (error "%s" (with-current-buffer buffer (buffer-string))))
-            ((error) (warn "%s" err) (delete-directory repo 'recursive))))
-        (unless (require 'elpaca-autoloads nil t)
-          (require 'elpaca)
-          (elpaca-generate-autoloads "elpaca" repo)
-          (load "./elpaca-autoloads")))
-      (add-hook 'after-init-hook #'elpaca-process-queues)
-      (elpaca `(,@elpaca-order))
-
-        (add-to-list 'load-path "/home/juanpablo/.emacs.d/site-lisp/")
-        (add-to-list 'load-path "/home/juanpablo/.guix-profile/share/emacs/site-lisp/")
-        (let ((default-directory (expand-file-name "~/.emacs.d/site-lisp/")))
-          (normal-top-level-add-subdirs-to-load-path))
-
-        (use-package guix
-          :config
-          (with-eval-after-load 'guix-repl
-            (setq guix-guile-program  '("guix" "repl")
-        	  guix-config-scheme-compiled-directory  nil
-        	  guix-repl-use-latest  nil
-        	  guix-repl-use-server  nil))
-          (setq guix-ask-before-buffer-update nil)
-          )
-
-        (use-package use-package-ensure-guix
-          :custom
-          (use-package-ensure-function #'use-package-ensure-guix) 
-
-          (use-package-ensure-guix-profile "/home/juanpablo/.guix-profile")
-          :config
-          (setq  use-package-always-ensure t)
-          )
-
-        (use-package exec-path-from-shell
-          :config
-          (when (memq window-system '(mac ns x))
-            (exec-path-from-shell-initialize))
-          )
-
-
-
 
 ** UI
 *** Font
@@ -294,11 +212,7 @@
   ;;       `((".*" ,(no-littering-expand-var-file-name "auto-save/") t))
   ;; )
 #+end_src
-*** LSP optimization settings
-#+begin_src emacs-lisp
-  (setq gc-cons-threshold 100000000)
-  (setq read-process-output-max (* 1024 1024))
-#+end_src
+
 * Lisp
 ** Macros
 
@@ -329,8 +243,6 @@ enjoy using a lot.
 
     `(s-format ,fmt 'aget (list ,@agetter))))
 #+end_src
-** Guix porting
-
 ** Functions
 #+begin_src emacs-lisp
   (defun my/load-default-init-file ()
@@ -529,121 +441,6 @@ enjoy using a lot.
 #+RESULTS:
 : t
 
-** Hydras
-:PROPERTIES:
-:header-args:emacs-lisp: :tangle no
-:END:
-
-*** Window
-#+begin_src emacs-lisp
-      (use-package hydra)
-      (use-package pretty-hydra)
-      (use-package windmove
-	:elpaca t)
-      (use-package transpose-frame)
-      (use-package headlong
-	:elpaca t)
-      (winner-mode 1)
-
-      ;;shameleslly taken from abo-abo's init files
-      ;; (pretty-hydra-define hydra-window (:foreign-keys warn :quit-key "q")
-      ;; ("Arrange"
-      ;;  (("v" (lambda ()
-      ;;          (interactive)
-      ;;          (split-window-right)
-      ;;          (windmove-right))
-      ;;        "vert")
-      ;;   ("x" (lambda ()
-      ;;          (interactive)
-      ;;          (split-window-below)
-      ;;          (windmove-down))
-      ;;        "horz")
-      ;;  ("d" ace-delete-window "del")
-      ;;  ("o" delete-other-windows "one" :exit t)
-      ;;  ("s" ace-swap-window "swap") 
-      ;;  ("t" transpose-frame "transpose" :exit t)
-      ;;  ("+" balance-windows "balance")
-      ;;  ("u" (progn (winner-undo) (setq this-command 'winner-undo)) "undo"))
-      ;;  "Move"
-      ;;  (("h" windmove-left nil)
-      ;;   ("j" windmove-down nil)
-      ;;   ("k" windmove-up nil)
-      ;;   ("l" windmove-right nil)
-      ;;   ("a" ace-window "ace")
-      ;;   ("i" ace-maximize-window "ace-one" :exit t)
-      ;;   ("b" ido-switch-buffer "buf")
-      ;;   ("m" headlong-bookmark-jump "bmk"))
-      ;;   )
-      ;; )
-#+end_src
-
-#+RESULTS:
-: hydra-window/body
-*** EAF
-#+begin_src emacs-lisp 
-  ;; More of a mnemonic hydra than a cluster of keys to be chained like aya keybinds for example.
-  ;; (pretty-hydra-define hydra-browser (:foreign-keys warn :quit-key "q")
-  ;; ("Go to"
-  ;;  (("o" eaf-py-proxy-insert_or_open_browser "open")
-  ;;   ("t" eaf-py-proxy-insert_or_new_blank_page "tab")
-  ;;   ("T" eaf-py-proxy-insert_or_recover_prev_close_page "recover"))
-  ;;  "Move"
-  ;;  (("j" eaf-py-proxy-insert_or_scroll_up nil)
-  ;;   ("k" eaf-py-proxy-insert_or_scroll_down nil)
-  ;;   ("h" eaf-py-proxy-insert_or_scroll_left nil)
-  ;;   ("l" eaf-py-proxy-insert_or_scroll_right nil)
-  ;;   ("H" eaf-py-proxy-insert_or_history_backward nil)
-  ;;   ("L" eaf-py-proxy-insert_or_history_forward nil)
-  ;;   ("J" eaf-py-proxy-insert_or_select_left_tab nil)
-  ;;   ("K" eaf-py-proxy-insert_or_select_right_tab nil)
-  ;;   ("O" eaf-py-proxy-insert_or_open_link_new_buffer_other_window nil)
-  ;;   ("i" eaf-py-proxy-insert_or_focus_input "input")
-  ;;   ("e" eaf-py-proxy-insert_or_edit_url "edit-url")
-  ;;   ("r" eaf-py-proxy-insert_or_refresh_ "refresh")
-  ;;   ("f" eaf-py-proxy-insert_or_open_link "link")
-  ;;   ("F" eaf-py-proxy-insert_or_open_link_new_buffer "link-newbuf"))
-  ;;  "Actions"
-  ;;  (("a" eaf-py-proxy-atomic_edit "atomic")
-  ;;   ("s" eaf-py-proxy-save_page_password "save-password")
-  ;;   ("p" eaf-py-proxy-toggle_password_autofill "insert-password")
-  ;;   ("," eaf-py-proxy-insert_or_switch_to_reader_mode "reader-mode")
-  ;;   (";" eaf-py-proxy-insert_or_translate_page "translate")
-  ;;   ("m" eaf-py-proxy-insert_or_toggle_device "tgl-device"))
-  ;;  "Open"
-  ;;  (("d" eaf-py-proxy-insert_or_open_downloads_setting "dwlds")
-  ;;   ("D"  eaf-py-proxy-open_devtools "dev-tools")
-  ;;   ("y"    eaf-py-proxy-insert_or_download_youtube_video "yt-dl"))
-  ;;  "Visuals"
-  ;;  (("0" eaf-py-proxy-insert_or_zoom_reset "reset")
-  ;;   ("-" eaf-py-proxy-zoom_out "out")
-  ;;   ("=" eaf-py-proxy-zoom_in "in")
-  ;;   ("3" eaf-py-proxy-insert_or_save_as_screenshot "scrshot"))
-  ;;   )
-  ;; )
-
-#+end_src
-
-#+RESULTS:
-: hydra-browser/body
-
-M-e atomic edit
-C-t toggle password autofill
-C-d save page password
-; translate page
-, reader mode
-
-Caret mode usual keys
-
-"c" eaf-py-proxy-insert_or_caret_at_line
-"v" eaf-py-proxy-caret_toggle_mark
-"w" eaf-py-proxy-caret_next_word
-"M-w" eaf-py-proxy-copy_text
-<escape>   eaf-py-proxy-caret_exit
-
-To be added
-
-()
-
 ** Which-key
 #+begin_src emacs-lisp
 (use-package which-key
@@ -704,40 +501,6 @@ To be added
 
 #+RESULTS:
 : t
-** Workspaces
-
-#+begin_src emacs-lisp
-  (defun my/startup-window-layout ()
-    (split-window-horizontally)
-    (other-window 1)
-    (split-window-below)
-    (other-window 2)
-    )
-
-  (defun my/config-startup-perspective ()
-    (persp-switch "project")
-    (my/startup-window-layout)
-    (switch-to-buffer "*dashboard*")
-    (other-window 1)
-    (shell (generate-new-buffer-name "*shell*"))
-    (other-window 1)
-    (switch-to-buffer "*scratch* (project)")
-    )
-
-  (use-package perspective
-    :custom
-    (persp-mode-prefix-key (kbd "C-c x"))
-    :init
-    (persp-mode 1)
-    ;; (my/config-startup-perspective)
-    )
-
-  (use-package burly)
-#+end_src
-
-#+RESULTS:
-: t
-
 ** Bookmarks
 #+begin_src emacs-lisp
   (require 'bookmark+)
@@ -763,24 +526,6 @@ To be added
 
   ;; (use-package bookmark+)			
 #+end_src
-** Projectile
-#+begin_src emacs-lisp
-
-  (use-package projectile
-    :init
-    (setq projectile-project-search-path '("~/" "~/work/kwali/"))
-    :config
-    (defun my/switch-project-action ()
-      (persp-switch (projectile-project-name))
-      )
-    (setq projectile-completion-system 'ivy)
-    (setq projectile-switch-project-action #'my/switch-project-action)
-    (projectile-mode)
-  )
-#+end_src
-
-#+RESULTS:
-:
 ** Casual
 :PROPERTIES:
 :header-args:emacs-lisp: :tangle no
@@ -980,18 +725,41 @@ To be added
 
 #+begin_src emacs-lisp
   (use-package term
-    :elpaca t
-    :config
-    (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
+        :elpaca t
+        :config
+        (setq explicit-shell-file-name "bash") ;; Change this to zsh, etc
 
-    ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
-    (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
+        ;; Match the default Bash shell prompt.  Update this if you have a custom prompt
+        (setq term-prompt-regexp "^[^#$%>\n]*[#$%>] *"))
 
-  (use-package eterm-256color
-    :hook (term-mode . eterm-256color-mode))
+      (use-package eterm-256color
+        :hook (term-mode . eterm-256color-mode))
 #+end_src  
 #+RESULTS:
 : t
+** Project
+#+begin_src emacs-lisp
+  (defun project-shell ()
+    "Open a shell in the current project's root directory."
+    (interactive)
+    (let ((default-directory (project-root (project-current t))))
+      (shell)))
+
+
+  (defun project-dired ()
+    "Open Dired in the current project's root directory."
+    (interactive)
+    (let ((default-directory (project-root (project-current t))))
+      (dired default-directory))) ; Pass default-directory to dired explicitly
+
+  (add-to-list 'project-switch-commands '(project-shell "Shell" "s"))
+  (add-to-list 'project-switch-commands '(project-dired "Dired" "d"))
+
+  ;; Optional: If you want direct keybindings like C-x p s for shell, and C-x p d for dired
+  (with-eval-after-load 'project
+    (define-key project-prefix-map "s" #'project-shell)
+    (define-key project-prefix-map "d" #'project-dired))
+#+end_src
 ** Templates
 #+begin_src emacs-lisp
   (use-package yasnippet
@@ -1014,100 +782,7 @@ To be added
 
 #+RESULTS:
 
-** COMMENT In-buffer Completion
-
-#+begin_src emacs-lisp
-  ;;     (use-package corfu
-
-  ;;     ;; Optional customizations
-  ;;       :custom
-  ;;       (corfu-cycle t)                ;; Enable cycling for`corfu-next/previous'
-  ;;       (corfu-auto t)			  ;; Enable auto completion
-  ;;       (corfu-separator ?\s)          ;; Orderless field separator
-  ;;       (corfu-quit-at-boundary 'separator)   ;; Never quit at completion boundary
-  ;;       (corfu-quit-no-match 'separator)      ;; Never quit, even if there is no match
-  ;;       (corfu-preview-current 'insert)    ;; Disable current candidate preview
-  ;;       (corfu-auto-prefix 2)
-  ;;       (corfu-auto-delay 0.0)
-
-  ;;       :init
-  ;;       (global-corfu-mode)
-  ;;     ;; You may want to enable Corfu only for certain modes.
-  ;;     ;; :hook ((prog-mode . corfu-mode)
-  ;;     ;;        (shell-mode . corfu-mode)
-  ;;     ;;        (eshell-mode . corfu-mode))
-
-  ;;     ;; Recommended: Enable Corfu globally.
-  ;;     ;; This is recommended since dabbrev can be used globally (M-/).
-  ;;     )
-
-  ;;   ;; ;; Use dabbrev with Corfu!
-  ;;   ;; (use-package dabbrev
-  ;;   ;;   :elpaca t
-  ;;   ;;   ;; Swap M-/ and C-M-/
-  ;;   ;;   :bind (("M-/" . dabbrev-completion)
-  ;;   ;;          ("C-M-/" . dabbrev-expand)))
-
-
-  ;;       ;; Add extensions
-  ;;     (use-package cape
-  ;;       ;; Bind dedicated completion commands
-  ;;       ;; Alternative prefix keys: C-c p, M-p, M-+, ...
-  ;;       ;; :init
-  ;;       ;; Add `completion-at-point-functions', used by `completion-at-point'.
-  ;;       ;; (defun cape-dabbrev-codium ()
-  ;;       ;; 	(cape-wrap-super #'cape-dabbrev #'codeium-completion-at-point)
-  ;;       ;; 	)
-  ;;       ;; (add-to-list 'completion-at-point-functions #'cape-dabbrev-codium)
-
-  ;;     )
-
-  ;; (use-package kind-icon
-  ;;   :after corfu
-  ;;   :custom
-  ;;   (kind-icon-use-icons t)
-  ;;   (kind-icon-default-face 'corfu-default) ; Have background color be the same as `corfu' face background
-  ;;   (kind-icon-blend-background nil)  ; Use midpoint color between foreground and background colors ("blended")?
-  ;;   (kind-icon-blend-frac 0.08)
-
-  ;;   ;; NOTE 2022-02-05: `kind-icon' depends `svg-lib' which creates a cache
-  ;;   ;; directory that defaults to the `user-emacs-directory'. Here, I change that
-  ;;   ;; directory to a location appropriate to `no-littering' conventions, a
-  ;;   ;; package which moves directories of other packages to sane locations.
-  ;;   (svg-lib-icons-dir (no-littering-expand-var-file-name "svg-lib/cache/")) ; Change cache dir
-  ;;   :config
-  ;;   (add-to-list 'corfu-margin-formatters #'kind-icon-margin-formatter) ; Enable `kind-icon'
-
-  ;;   ;; Add hook to reset cache so the icon colors match my theme
-  ;;   ;; NOTE 2022-02-05: This is a hook which resets the cache whenever I switch
-  ;;   ;; the theme using my custom defined command for switching themes. If I don't
-  ;;   ;; do this, then the backgound color will remain the same, meaning it will not
-  ;;   ;; match the background color corresponding to the current theme. Important
-  ;;   ;; since I have a light theme and dark theme I switch between. This has no
-  ;;   ;; function unless you use something similar
-  ;;   (add-hook 'kb/themes-hooks #'(lambda () (interactive) (kind-icon-reset-cache))))
-
-#+end_src
-
-#+begin_src emacs-lisp
-    (use-package company
-    :ensure t
-    :hook (after-init . global-company-mode)
-    :config
-    (setq company-idle-delay 0.1
-          company-minimum-prefix-length 1
-          company-selection-wrap-around t
-          company-show-numbers t
-          company-tooltip-align-annotations t)
-    ;; Make sure capf is included in backends
-    (add-to-list 'company-backends 'company-capf)
-    
-    ;; Add Codeium to completion-at-point-functions
-    (add-to-list 'completion-at-point-functions #'codeium-completion-at-point)
-    )
-    
-    
-#+end_src
+** In-buffer Completion
 ** Syntax Checking
 #+begin_src emacs-lisp
   (use-package flycheck
@@ -1181,7 +856,11 @@ To be added
 
 #+RESULTS:
 : evilnc-comment-or-uncomment-lines
-
+*** LSP optimization settings
+#+begin_src emacs-lisp
+  (setq gc-cons-threshold 100000000)
+  (setq read-process-output-max (* 1024 1024))
+#+end_src
 ** Python
 
 #+begin_src emacs-lisp
@@ -1386,11 +1065,26 @@ To be added
   ;; (transient-append-suffix 'gptel-menu '("SPC") 
   ;;   '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer))
 
+  (use-package wingman
+  :straight (:type git :host github :repo "mjrusso/wingman")
+  :hook (prog-mode . wingman-mode)
+  :config
+  ;; Add your custom configuration here
+  (setq wingman-model-name "llama3:latest")
+  (setq wingman-llama-endpoint "http://127.0.0.1:8012/infill")
+  (setq wingman-ring-n-chunks 0)
+  )
+
   (use-package smerge-mode
     :ensure nil
     :hook
     (prog-mode . smerge-mode))
 
+
+  (use-package claude-code-ide
+  :straight (:type git :host github :repo "manzaltu/claude-code-ide.el"))
+
+  
   ;; (use-package codeium
   ;;   :ensure nil)
 
@@ -1492,21 +1186,6 @@ To be added
 #+RESULTS:
 : t
 
-** Atomic Emacs
-#+begin_src emacs-lisp
-(use-package atomic-chrome
-  
-  :config
-  (atomic-chrome-start-server)
-  (setq atomic-chrome-buffer-open-style 'frame)
-  (setq atomic-chrome-default-major-mode 'python-mode)
-  (setq atomic-chrome-url-major-mode-alist
-	'(("redmine" . textile-mode)))
-)
-#+end_src
-
-#+RESULTS:
-: t
 ** Org Tree Slide
 #+begin_src emacs-lisp
   (use-package hide-lines)
