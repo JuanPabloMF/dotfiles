@@ -606,40 +606,39 @@ enjoy using a lot.
 #+end_src
 * Tramp
 #+begin_src emacs-lisp
-  (with-eval-after-load 'tramp
-    (add-to-list 'tramp-methods
-                 '("sshxa"
-                   (tramp-login-program "ssh")
-                   (tramp-login-args
-                    (("-l" "%u")
-                     ("-p" "%p")
-                     ("%c")
-                     ("-e" "none")
-                     ("-t" "-t")
-                     ("-o" "RemoteCommand=\"%l\"")
-                     ("-A")
-                     ("%h")))
-                   (tramp-async-args
-                    (("-q")))
-  		 (tramp-remote-shell         "/bin/sh")
-                   (tramp-remote-shell-login
-                    ("-l"))
-                   (tramp-remote-shell-args
-                    ("-c")))
-                 )
-    (tramp-set-completion-function "sshxa" tramp-completion-function-alist-ssh))
+    (with-eval-after-load 'tramp
+      (add-to-list 'tramp-methods
+                   '("sshxa"
+                     (tramp-login-program "ssh")
+                     (tramp-login-args
+                      (("-l" "%u")
+                       ("-p" "%p")
+                       ("%c")
+                       ("-e" "none")
+                       ("-t" "-t")
+                       ("-o" "RemoteCommand=\"%l\"")
+                       ("-A")
+                       ("%h")))
+                     (tramp-async-args
+                      (("-q")))
+    		 (tramp-remote-shell         "/bin/sh")
+                     (tramp-remote-shell-login
+                      ("-l"))
+                     (tramp-remote-shell-args
+                      ("-c")))
+                   )
+      (tramp-set-completion-function "sshxa" tramp-completion-function-alist-ssh))
 
-  (use-package docker-tramp)
+    
+    (defun my/find-package-path (package-name)
+      "Find the installation path of a given PACKAGE-NAME."
+      (let ((package-desc (cadr (assq package-name package-alist))))
+        (if package-desc
+    	(package-desc-dir package-desc)
+          (message "Package '%s' not found!" package-name))))
 
-  (defun my/find-package-path (package-name)
-    "Find the installation path of a given PACKAGE-NAME."
-    (let ((package-desc (cadr (assq package-name package-alist))))
-      (if package-desc
-  	(package-desc-dir package-desc)
-        (message "Package '%s' not found!" package-name))))
-
-  ;; (setq tramp-default-remote-shell "/bin/sh")
-  ;; (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
+    ;; (setq tramp-default-remote-shell "/bin/sh")
+    ;; (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 #+end_src
 
 #+RESULTS:
@@ -903,7 +902,6 @@ enjoy using a lot.
     :init
     (require 'drepl-ipython)
     :config
-    (defvaralias 'python-interpreter 'python-shell-interpreter)
   )
 
   (use-package code-cells
@@ -974,15 +972,15 @@ enjoy using a lot.
 
   ;; This could be simplified by just calling (make-*) and setting .authinfo with api endpoint and apikey as USER
   (defun get-authinfo-password (machine)
-    "Read the contents of FILE-PATH and return it as a string."
-    (let ((auth-info (auth-source-search :host machine)))
+    "Read password from encrypted authinfo file."
+    (let* ((auth-sources '("~/.authinfo"))
+           (auth-info (auth-source-search :host machine :max 1)))
       (if auth-info
           (let ((secret (plist-get (car auth-info) :secret)))
             (if (functionp secret)
                 (funcall secret)
-              secret)
-            )
-        (message "No matching auth info found."))))
+              secret))
+        (message "No matching auth info found for %s" machine))))
 
 
 
