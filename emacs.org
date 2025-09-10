@@ -592,17 +592,6 @@ enjoy using a lot.
   (csetq ediff-window-setup-function 'ediff-setup-windows-plain)
   (csetq ediff-split-window-function 'split-window-horizontally)
 
-  (defun ora-ediff-hook ()
-    (ediff-setup-keymap)
-    (define-key ediff-mode-map "j" 'ediff-next-difference)
-    (define-key ediff-mode-map "k" 'ediff-previous-difference))
-
-  (add-hook 'ediff-mode-hook 'ora-ediff-hook)
-
-  (winner-mode)
-  (add-hook 'ediff-after-quit-hook-internal 'winner-undo)
-
-
 #+end_src
 * Tramp
 #+begin_src emacs-lisp
@@ -641,9 +630,56 @@ enjoy using a lot.
     ;; (add-to-list 'tramp-remote-path 'tramp-own-remote-path)
 #+end_src
 
-#+RESULTS:
-: remote-shell*
- Org
+# ** Claude Code TRAMP Integration
+
+# #+begin_src emacs-lisp
+#     ;; Fix for vterm backend over TRAMP
+#     (with-eval-after-load 'vterm
+#       (setq vterm-tramp-shells `((t ,(executable-find "claude")))))
+    
+#     ;; SSH port forwarding for MCP server connection
+#     (with-eval-after-load 'claude-code-ide
+#       (defun claude-code-ide-start-ssh-forwarding (port host)
+#         "Start SSH port forwarding from remote host to local port for MCP server."
+#         (when (and port host)
+#           (claude-code-ide-debug "Starting SSH Forwarding MCP HTTP for %d" port)
+#           (call-process "ssh" nil nil nil "-O" "forward" "-R"
+#                         (format "%d:localhost:%d" port port)
+#                         host)))
+      
+#       ;; Hook into the MCP server setup to enable port forwarding for remote files
+#       (advice-add 'claude-code-ide-ensure-http-server :before
+#                   (lambda ()
+#                     (when (file-remote-p default-directory)
+#                       (let ((actual-port (or claude-code-ide-http-port 
+#                                            (claude-code-ide-get-free-port))))
+#                         (claude-code-ide-start-ssh-forwarding 
+#                          actual-port
+#                          (file-remote-p default-directory 'host)))))))
+# #+end_src
+
+# *** Remote Claude Wrapper Script
+
+# For the PID lockfile issue, create this wrapper script on your remote host and ensure it's in your PATH as 'claude':
+
+# #+begin_example 
+# #!/bin/bash
+# # Save as ~/bin/claude or another location in your remote PATH
+
+# lock=~/.claude/ide/$CLAUDE_CODE_SSE_PORT.lock
+# if [[ -f $lock ]]; then
+#     sed -ri 's/"pid":[0-9]+/"pid":'$$'/' $lock
+#     /usr/local/bin/claude ${1+"$@"}  # Adjust path to actual claude binary
+# else
+#     echo "failed to find lock file: $lock"
+#     exit 1
+# fi
+# #+end_example
+
+# #+RESULTS:
+# : remote-shell*
+
+* Org
 
 #+begin_src emacs-lisp
   (defun efs/org-font-setup ()
@@ -758,6 +794,8 @@ enjoy using a lot.
   (with-eval-after-load 'project
     (define-key project-prefix-map "s" #'project-shell)
     (define-key project-prefix-map "d" #'project-dired))
+
+  (project-remember-projects-under "~/work/repos" t)
 #+end_src
 ** Templates
 #+begin_src emacs-lisp
@@ -970,179 +1008,186 @@ enjoy using a lot.
 ** GPTs and AI
 #+begin_src emacs-lisp
 
-  ;; This could be simplified by just calling (make-*) and setting .authinfo with api endpoint and apikey as USER
-  (defun get-authinfo-password (machine)
-    "Read password from encrypted authinfo file."
-    (let* ((auth-sources '("~/.authinfo"))
-           (auth-info (auth-source-search :host machine :max 1)))
-      (if auth-info
-          (let ((secret (plist-get (car auth-info) :secret)))
-            (if (functionp secret)
-                (funcall secret)
-              secret))
-        (message "No matching auth info found for %s" machine))))
+    ;; This could be simplified by just calling (make-*) and setting .authinfo with api endpoint and apikey as USER
+    (defun get-authinfo-password (machine)
+      "Read password from encrypted authinfo file."
+      (let* ((auth-sources '("~/.authinfo"))
+             (auth-info (auth-source-search :host machine :max 1)))
+        (if auth-info
+            (let ((secret (plist-get (car auth-info) :secret)))
+              (if (functionp secret)
+                  (funcall secret)
+                secret))
+          (message "No matching auth info found for %s" machine))))
 
 
 
-  (defun load-all-gptel-modules ()
-    "Find and require all gptel-* modules."
-    (interactive)
-    (let* ((gptel-dir (file-name-directory (locate-library "gptel")))
-           (gptel-files (directory-files gptel-dir t "^gptel-.*\\.el$")))
-      (dolist (file gptel-files)
-        (let ((feature (intern (file-name-sans-extension (file-name-nondirectory file)))))
-          (message "Loading %s..." feature)
-          (require feature nil t)))))
+    (defun load-all-gptel-modules ()
+      "Find and require all gptel-* modules."
+      (interactive)
+      (let* ((gptel-dir (file-name-directory (locate-library "gptel")))
+             (gptel-files (directory-files gptel-dir t "^gptel-.*\\.el$")))
+        (dolist (file gptel-files)
+          (let ((feature (intern (file-name-sans-extension (file-name-nondirectory file)))))
+            (message "Loading %s..." feature)
+            (require feature nil t)))))
 
 
 
-  (use-package gptel
-    :init
-    (load-all-gptel-modules)
-    :config
-    ;; (setq gptel-use-curl nil)
-    (setq gptel-track-media t)
-    (setq gptel-use-tools t)
-    (setq  gptel-model 'claude-3-7-sonnet-20250219)
-    (gptel-make-gemini "Gemini"
-      :stream t
-      :key (get-authinfo-password "gemini.com")
+    (use-package gptel
+      :init
+      (load-all-gptel-modules)
+      :config
+      ;; (setq gptel-use-curl nil)
+      (setq gptel-track-media t)
+      (setq gptel-use-tools t)
+      (setq  gptel-model 'claude-3-7-sonnet-20250219)
+      (gptel-make-gemini "Gemini"
+        :stream t
+        :key (get-authinfo-password "gemini.com")
+        )
+      (setq
+       gptel-backend (gptel-make-anthropic "Claude"
+                       :stream t
+                       :key (get-authinfo-password "anthropic.com")
+                   	   ))
+      (gptel-make-tool
+       :function (lambda (url)
+                   (with-current-buffer (url-retrieve-synchronously url)
+    		 (goto-char (point-min))
+    		 (forward-paragraph)
+    		 (let ((dom (libxml-parse-html-region (point) (point-max))))
+                       (run-at-time 0 nil #'kill-buffer (current-buffer))
+                       (with-temp-buffer
+                         (shr-insert-document dom)
+                         (buffer-substring-no-properties (point-min) (point-max))))))
+       :name "read_url"
+       :description "Fetch and read the contents of a URL"
+       :args (list '(:name "url"
+    		       :type string
+    		       :description "The URL to read"))
+       :category "web")
       )
-    (setq
-     gptel-backend (gptel-make-anthropic "Claude"
-                     :stream t
-                     :key (get-authinfo-password "anthropic.com")
-                 	   ))
-    (gptel-make-tool
-     :function (lambda (url)
-                 (with-current-buffer (url-retrieve-synchronously url)
-  		 (goto-char (point-min))
-  		 (forward-paragraph)
-  		 (let ((dom (libxml-parse-html-region (point) (point-max))))
-                     (run-at-time 0 nil #'kill-buffer (current-buffer))
-                     (with-temp-buffer
-                       (shr-insert-document dom)
-                       (buffer-substring-no-properties (point-min) (point-max))))))
-     :name "read_url"
-     :description "Fetch and read the contents of a URL"
-     :args (list '(:name "url"
-  		       :type string
-  		       :description "The URL to read"))
-     :category "web")
+
+
+
+    ;; Add this to your init.el
+
+    (with-eval-after-load 'gptel-transient
+      ;; Define the suffix command
+      (transient-define-suffix gptel--suffix-jump-to-gptel-buffer ()
+        "Jump to an existing gptel buffer or create a new one."
+        :key "j"
+        :description "Jump to gptel buffer"
+        :transient nil
+        (interactive)
+        (let* ((gptel-buffers (cl-loop for buf in (buffer-list)
+                                       when (buffer-local-value 'gptel-mode buf)
+                                       collect (buffer-name buf)))
+               (default-name (concat "*" (gptel-backend-name gptel-backend) "*"))
+               (buffer-name (completing-read 
+                             (format "GPTel buffer (default %s): " default-name)
+                             gptel-buffers
+                             nil nil nil nil
+                             default-name)))
+          (gptel buffer-name)))
+      
+      ;; Add the suffix to the gptel-menu transient
+      (transient-append-suffix 'gptel-menu
+        '(0 0 0) ; This targets the suffix after the first suffix in the first group
+        '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer)))
+
+    ;; Alternatively, if you want to place it in a specific section, you can use something like:
+    ;; (transient-append-suffix 'gptel-menu '("SPC") 
+    ;;   '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer))
+
+    (use-package wingman
+    :straight (:type git :host github :repo "mjrusso/wingman")
+    :hook (prog-mode . wingman-mode)
+    :config
+    ;; Add your custom configuration here
+    (setq wingman-model-name "llama3:latest")
+    (setq wingman-llama-endpoint "http://127.0.0.1:8012/infill")
+    (setq wingman-ring-n-chunks 0)
+    )
+
+    (use-package smerge-mode
+      :ensure nil
+      :hook
+      (prog-mode . smerge-mode))
+
+
+  (use-package eat)
+    
+    (use-package claude-code-ide
+    :straight (:type git :host github :repo "manzaltu/claude-code-ide.el")
+    :config
+    (setq claude-code-ide-terminal-backend 'eat)
     )
 
 
 
-  ;; Add this to your init.el
 
-  (with-eval-after-load 'gptel-transient
-    ;; Define the suffix command
-    (transient-define-suffix gptel--suffix-jump-to-gptel-buffer ()
-      "Jump to an existing gptel buffer or create a new one."
-      :key "j"
-      :description "Jump to gptel buffer"
-      :transient nil
-      (interactive)
-      (let* ((gptel-buffers (cl-loop for buf in (buffer-list)
-                                     when (buffer-local-value 'gptel-mode buf)
-                                     collect (buffer-name buf)))
-             (default-name (concat "*" (gptel-backend-name gptel-backend) "*"))
-             (buffer-name (completing-read 
-                           (format "GPTel buffer (default %s): " default-name)
-                           gptel-buffers
-                           nil nil nil nil
-                           default-name)))
-        (gptel buffer-name)))
-    
-    ;; Add the suffix to the gptel-menu transient
-    (transient-append-suffix 'gptel-menu
-      '(0 0 0) ; This targets the suffix after the first suffix in the first group
-      '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer)))
+    ;; (use-package codeium
+    ;;   :ensure nil)
 
-  ;; Alternatively, if you want to place it in a specific section, you can use something like:
-  ;; (transient-append-suffix 'gptel-menu '("SPC") 
-  ;;   '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer))
-
-  (use-package wingman
-  :straight (:type git :host github :repo "mjrusso/wingman")
-  :hook (prog-mode . wingman-mode)
-  :config
-  ;; Add your custom configuration here
-  (setq wingman-model-name "llama3:latest")
-  (setq wingman-llama-endpoint "http://127.0.0.1:8012/infill")
-  (setq wingman-ring-n-chunks 0)
-  )
-
-  (use-package smerge-mode
-    :ensure nil
-    :hook
-    (prog-mode . smerge-mode))
+    ;; (use-package aider
+    ;;   :config
+    ;;   ;; For latest claude sonnet model
+    ;;   (setq aider-args '("--model" "sonnet" "--no-auto-accept-architect"))
+    ;;   (setenv "ANTHROPIC_API_KEY;; " (get-authinfo-password "anthropic.com"))
 
 
-  (use-package claude-code-ide
-  :straight (:type git :host github :repo "manzaltu/claude-code-ide.el"))
-
-  
-  ;; (use-package codeium
-  ;;   :ensure nil)
-
-  ;; (use-package aider
-  ;;   :config
-  ;;   ;; For latest claude sonnet model
-  ;;   (setq aider-args '("--model" "sonnet" "--no-auto-accept-architect"))
-  ;;   (setenv "ANTHROPIC_API_KEY;; " (get-authinfo-password "anthropic.com"))
-
-
-  ;; (use-package copilot
-  ;;   :after corfu
-  ;;   :hook (python-mode . copilot-mode)
-  ;;   :custom
-  ;;   (copilot-node-executable "/home/juanpablo/.guix-home/profile/bin/node")
-  ;;   :bind ((:map prog-mode-map
-  ;;                ("M-k" . copilot-complete))
-  ;;          (:map copilot-completion-map
-  ;;                ("M-l" . copilot-accept-completion)
-  ;;                ("M-1" . copilot-accept-completion-by-word)
-  ;;                ("M-2" . copilot-accept-completion-by-line))))
+    ;; (use-package copilot
+    ;;   :after corfu
+    ;;   :hook (python-mode . copilot-mode)
+    ;;   :custom
+    ;;   (copilot-node-executable "/home/juanpablo/.guix-home/profile/bin/node")
+    ;;   :bind ((:map prog-mode-map
+    ;;                ("M-k" . copilot-complete))
+    ;;          (:map copilot-completion-map
+    ;;                ("M-l" . copilot-accept-completion)
+    ;;                ("M-1" . copilot-accept-completion-by-word)
+    ;;                ("M-2" . copilot-accept-completion-by-line))))
 
 
-  ;; (use-package claude-code
-  ;;   :config
-  ;;   (add-to-list 'exec-path "/home/juanpablo/.npm-global/bin")
-  ;;   (setq claude-code-program (executable-find "claude"))
-  ;;   )
+    ;; (use-package claude-code
+    ;;   :config
+    ;;   (add-to-list 'exec-path "/home/juanpablo/.npm-global/bin")
+    ;;   (setq claude-code-program (executable-find "claude"))
+    ;;   )
 
-    ;; Or chatgpt model
-    ;; (setq aider-args '("--model" "o4-mini"))
-    ;; (setenv "OPENAI_API_KEY" <your-openai-api-key>)
-    ;; Or gemini model
-    ;; (setq aider-args '("--model" "gemini-exp"))
-    ;; (setenv "GEMINI_API_KEY" <your-gemini-api-key>)
-    ;; Or use your personal config file
-    ;; (setq aider-args `("--config" ,(expand-file-name "~/.aider.conf.yml")))
-    ;; ;;
-    ;; Optional: Set a key binding for the transient menu
-    ;; )
-  ;; (use-package elysium
-  ;;   :elpaca (elysium
+      ;; Or chatgpt model
+      ;; (setq aider-args '("--model" "o4-mini"))
+      ;; (setenv "OPENAI_API_KEY" <your-openai-api-key>)
+      ;; Or gemini model
+      ;; (setq aider-args '("--model" "gemini-exp"))
+      ;; (setenv "GEMINI_API_KEY" <your-gemini-api-key>)
+      ;; Or use your personal config file
+      ;; (setq aider-args `("--config" ,(expand-file-name "~/.aider.conf.yml")))
+      ;; ;;
+      ;; Optional: Set a key binding for the transient menu
+      ;; )
+    ;; (use-package elysium
+    ;;   :elpaca (elysium
 
-  ;;     	     :host github
-  ;;     	     :repo "lanceberge/elysium"
-  ;;     	     )
-  ;;   :custom
-  ;;   ;; Below are the default values
-  ;;   (elysium-window-size 0.33) ; The elysium buffer will be 1/3 your screen
-  ;;   (elysium-window-style 'vertical)) ; Can be customized to horizontal
+    ;;     	     :host github
+    ;;     	     :repo "lanceberge/elysium"
+    ;;     	     )
+    ;;   :custom
+    ;;   ;; Below are the default values
+    ;;   (elysium-window-size 0.33) ; The elysium buffer will be 1/3 your screen
+    ;;   (elysium-window-style 'vertical)) ; Can be customized to horizontal
 
-  ;; (use-package aider
-  ;;   :elpaca (:host github :repo "tninja/aider.el" :files ("aider.el"))
-  ;;   :config
-  ;;   ;; Use claude-3-5-sonnet cause it is best in aider benchmark 
-  ;;   (setq aider-args '("--model" "anthropic/claude-3-5-sonnet-20241022"))
-  ;;   ;;(setenv "ANTHROPIC_API_KEY" gptel-api-key)
-  ;;   (global-set-key (kbd "C-c a") 'aider-transient-menu))
+    ;; (use-package aider
+    ;;   :elpaca (:host github :repo "tninja/aider.el" :files ("aider.el"))
+    ;;   :config
+    ;;   ;; Use claude-3-5-sonnet cause it is best in aider benchmark 
+    ;;   (setq aider-args '("--model" "anthropic/claude-3-5-sonnet-20241022"))
+    ;;   ;;(setenv "ANTHROPIC_API_KEY" gptel-api-key)
+    ;;   (global-set-key (kbd "C-c a") 'aider-transient-menu))
 
-  ;; (use-package transient)
+    ;; (use-package transient)
 
 
 #+end_src
