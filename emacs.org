@@ -12,14 +12,30 @@
 #+begin_src emacs-lisp
   (require 'package)
   (setq package-enable-at-startup nil)
+
+  ;; Set guix home profile as environment variable
+  (setenv "GUIX_PROFILE" (expand-file-name "~/.guix-home/profile"))
+
+  ;; Add guix home profile to load-path FIRST (before package-initialize)
+  (let ((guix-share-emacs (expand-file-name "~/.guix-home/profile/share/emacs/site-lisp/")))
+    (when (file-directory-p guix-share-emacs)
+      (add-to-list 'load-path guix-share-emacs)
+      (let ((default-directory guix-share-emacs))
+        (normal-top-level-add-subdirs-to-load-path))))
+
+  ;; Add local site-lisp
   (add-to-list 'load-path "/home/juanpablo/.emacs.d/site-lisp/")
-  ;; (add-to-list 'load-path "/home/juanpablo/.guix-profile/share/emacs/site-lisp/")
   (let ((default-directory (expand-file-name "~/.emacs.d/site-lisp/")))
     (normal-top-level-add-subdirs-to-load-path))
+
   (add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
   (package-initialize)
   (require 's)
   (require 'use-package)
+
+  ;; Don't auto-install packages - rely on guix home profile by default
+  (setq use-package-always-ensure nil)
+
   (use-package guix
     :config
     (with-eval-after-load 'guix-repl
@@ -27,16 +43,8 @@
   	  guix-config-scheme-compiled-directory  nil
   	  guix-repl-use-latest  nil
   	  guix-repl-use-server  nil))
-    (setq guix-ask-before-buffer-update nil)
-    )
-  (setq  guix-current-profile "/home/juanpablo/.guix-home/profile")
-  (setenv "GUIX_PROFILE" (expand-file-name "~/.guix-home/profile"))
-  (use-package use-package-ensure-guix
-    :custom
-    (use-package-ensure-function #'use-package-ensure-guix) 
-    (use-package-ensure-guix-profile "/home/juanpablo/.guix-home/profile")
-    )
-  (setq  use-package-always-ensure t)
+    (setq guix-ask-before-buffer-update nil))
+  (setq guix-current-profile "/home/juanpablo/.guix-home/profile")
 
 
 
@@ -60,6 +68,14 @@
         (goto-char (point-max))
         (eval-print-last-sexp)))
     (load bootstrap-file nil 'nomessage))
+
+;; Load transient from straight.el before built-in version (Emacs 30 compatibility)
+(straight-use-package 'transient)
+
+;; Suppress obsolete docker-tramp warning (installed via Guix, use tramp-container instead)
+(with-eval-after-load 'warnings
+  (add-to-list 'warning-suppress-types '(tramp)))
+(setq ad-redefinition-action 'accept)
 #+end_src
 
 ** UI
@@ -503,7 +519,8 @@ enjoy using a lot.
 : t
 ** Bookmarks
 #+begin_src emacs-lisp
-  (require 'bookmark+)
+  (use-package bookmark+
+    :straight (:host github :repo "emacsmirror/bookmark-plus"))
 
   (defun my/bmkp-copy-file-path (bookmark)
   "Copy the file path of BOOKMARK to the kill ring."
@@ -595,6 +612,9 @@ enjoy using a lot.
 #+end_src
 * Tramp
 #+begin_src emacs-lisp
+    ;; Use built-in tramp-container instead of obsolete docker-tramp
+    (require 'tramp-container)
+
     (with-eval-after-load 'tramp
       (add-to-list 'tramp-methods
                    '("sshxa"
@@ -795,7 +815,8 @@ enjoy using a lot.
     (define-key project-prefix-map "s" #'project-shell)
     (define-key project-prefix-map "d" #'project-dired))
 
-  (project-remember-projects-under "~/work/repos" t)
+  (when (file-directory-p "~/work/repos")
+    (project-remember-projects-under "~/work/repos" t))
 #+end_src
 ** Templates
 #+begin_src emacs-lisp
@@ -1022,35 +1043,22 @@ enjoy using a lot.
 
 
 
-    (defun load-all-gptel-modules ()
-      "Find and require all gptel-* modules."
-      (interactive)
-      (let* ((gptel-dir (file-name-directory (locate-library "gptel")))
-             (gptel-files (directory-files gptel-dir t "^gptel-.*\\.el$")))
-        (dolist (file gptel-files)
-          (let ((feature (intern (file-name-sans-extension (file-name-nondirectory file)))))
-            (message "Loading %s..." feature)
-            (require feature nil t)))))
-
-
-
     (use-package gptel
-      :init
-      (load-all-gptel-modules)
+      :straight t
+      :defer t
+      :commands (gptel gptel-menu gptel-send)
       :config
-      ;; (setq gptel-use-curl nil)
+      ;; Load backend modules
       (setq gptel-track-media t)
       (setq gptel-use-tools t)
-      (setq  gptel-model 'claude-3-7-sonnet-20250219)
+      (setq gptel-model 'claude-3-7-sonnet-20250219)
       (gptel-make-gemini "Gemini"
         :stream t
-        :key (get-authinfo-password "gemini.com")
-        )
+        :key (get-authinfo-password "gemini.com"))
       (setq
        gptel-backend (gptel-make-anthropic "Claude"
                        :stream t
-                       :key (get-authinfo-password "anthropic.com")
-                   	   ))
+                       :key (get-authinfo-password "anthropic.com")))
       (gptel-make-tool
        :function (lambda (url)
                    (with-current-buffer (url-retrieve-synchronously url)
@@ -1101,15 +1109,15 @@ enjoy using a lot.
     ;; (transient-append-suffix 'gptel-menu '("SPC") 
     ;;   '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer))
 
-    (use-package wingman
-    :straight (:type git :host github :repo "mjrusso/wingman")
-    :hook (prog-mode . wingman-mode)
-    :config
-    ;; Add your custom configuration here
-    (setq wingman-model-name "llama3:latest")
-    (setq wingman-llama-endpoint "http://127.0.0.1:8012/infill")
-    (setq wingman-ring-n-chunks 0)
-    )
+    ;; (use-package wingman
+    ;; :straight (:type git :host github :repo "mjrusso/wingman")
+    ;; :hook (prog-mode . wingman-mode)
+    ;; :config
+    ;; ;; Add your custom configuration here
+    ;; (setq wingman-model-name "llama3:latest")
+    ;; (setq wingman-llama-endpoint "http://127.0.0.1:8012/infill")
+    ;; (setq wingman-ring-n-chunks 0)
+    ;; )
 
     (use-package smerge-mode
       :ensure nil
