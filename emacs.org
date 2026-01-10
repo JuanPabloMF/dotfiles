@@ -10,18 +10,21 @@
 ** Package Management
 *** Guix bootstrapping
 #+begin_src emacs-lisp
+  ;; Maximize GC threshold during startup to prevent garbage collection
+  (setq gc-cons-threshold most-positive-fixnum)
+  (add-hook 'emacs-startup-hook
+            (lambda () (setq gc-cons-threshold 100000000)))
+
   (require 'package)
   (setq package-enable-at-startup nil)
 
   ;; Set guix home profile as environment variable
   (setenv "GUIX_PROFILE" (expand-file-name "~/.guix-home/profile"))
 
-  ;; Add guix home profile to load-path FIRST (before package-initialize)
+  ;; Add guix home profile to load-path (without scanning subdirs - guix handles autoloads)
   (let ((guix-share-emacs (expand-file-name "~/.guix-home/profile/share/emacs/site-lisp/")))
     (when (file-directory-p guix-share-emacs)
-      (add-to-list 'load-path guix-share-emacs)
-      (let ((default-directory guix-share-emacs))
-        (normal-top-level-add-subdirs-to-load-path))))
+      (add-to-list 'load-path guix-share-emacs)))
 
   ;; Add local site-lisp
   (add-to-list 'load-path "/home/juanpablo/.emacs.d/site-lisp/")
@@ -37,6 +40,8 @@
   (setq use-package-always-ensure nil)
 
   (use-package guix
+    :defer t
+    :commands (guix guix-packages-by-name guix-installed-packages)
     :config
     (with-eval-after-load 'guix-repl
       (setq guix-guile-program  '("guix" "repl")
@@ -81,7 +86,9 @@
 ** UI
 *** Font
 #+begin_src emacs-lisp
-(use-package fontaine)
+(use-package fontaine
+  :defer t
+  :commands (fontaine-set-preset))
 
   (setq fontaine-presets
         '((tiny
@@ -128,7 +135,8 @@
 (use-package doom-themes
   :init (load-theme 'doom-palenight t))
 
-(use-package all-the-icons)
+(use-package all-the-icons
+  :defer t)
 
 (use-package doom-modeline
   :init (doom-modeline-mode 1)
@@ -169,22 +177,24 @@
 
 *** Dashboard
 #+begin_src emacs-lisp
-  (use-package page-break-lines)
+  (use-package page-break-lines
+    :defer t)
 
-  (use-package dashboard 
-    :init      
+  (use-package dashboard
+    :defer 1  ;; Load after 1 second idle
+    :init
     (setq dashboard-set-heading-icons t)
     (setq dashboard-set-file-icons t)
     (setq dashboard-banner-logo-title "Emacs Is More Than A Text Editor!")
-    (setq dashboard-startup-banner `logo) 
+    (setq dashboard-startup-banner 'logo)
     (setq dashboard-center-content t)
     (setq dashboard-set-navigator t)
     (setq dashboard-page-separator  "\n\f\n")
     (setq dashboard-items '((recents . 5)
-                            (agenda . 5 )
-                            (bookmarks . 5)
-                            (projects . 3)))
+                            (bookmarks . 3)
+                            (projects . 3)))  ;; Removed agenda to speed up
     :config
+    (dashboard-setup-startup-hook)
     (dashboard-modify-heading-icons '((recents . "file-text")
                                       (bookmarks . "book"))))
 
@@ -492,7 +502,9 @@ enjoy using a lot.
      (ivy-rich-mode 1)
      (setq ivy-rich-parse-remote-buffer nil))
 
-   (use-package counsel-tramp)
+   (use-package counsel-tramp
+     :defer t
+     :commands (counsel-tramp))
 
  #+end_src
 
@@ -520,7 +532,9 @@ enjoy using a lot.
 ** Bookmarks
 #+begin_src emacs-lisp
   (use-package bookmark+
-    :straight (:host github :repo "emacsmirror/bookmark-plus"))
+    :straight (:host github :repo "emacsmirror/bookmark-plus")
+    :defer t
+    :commands (bmkp-jump-to-type bmkp-set-bookmark-file-bookmark))
 
   (defun my/bmkp-copy-file-path (bookmark)
   "Copy the file path of BOOKMARK to the kill ring."
@@ -574,27 +588,39 @@ enjoy using a lot.
 * Editing
 ** Avy
 #+begin_src emacs-lisp
-(use-package avy)
+(use-package avy
+  :defer t
+  :commands (avy-goto-char avy-goto-char-2 avy-goto-line avy-goto-word-1))
 #+end_src
 
 ** Ace Window
 #+begin_src emacs-lisp
-(use-package ace-window)
+(use-package ace-window
+  :defer t
+  :commands (ace-window ace-select-window))
 #+end_src
 
 ** Expand
 
 #+begin_src emacs-lisp
-(use-package expand-region)
-(use-package easy-kill)
+(use-package expand-region
+  :defer t
+  :commands (er/expand-region er/contract-region))
+(use-package easy-kill
+  :defer t
+  :commands (easy-kill easy-mark))
 #+end_src
 
 #+RESULTS:
 
 ** Multiple cursors
 #+begin_src emacs-lisp
-  (use-package phi-search)
-  (use-package multiple-cursors)  
+  (use-package phi-search
+    :defer t
+    :commands (phi-search phi-search-backward))
+  (use-package multiple-cursors
+    :defer t
+    :commands (mc/mark-next-like-this mc/mark-previous-like-this mc/mark-all-like-this mc/edit-lines))
 #+end_src
 
 #+RESULTS:
@@ -613,7 +639,9 @@ enjoy using a lot.
 * Tramp
 #+begin_src emacs-lisp
     ;; Use built-in tramp-container instead of obsolete docker-tramp
-    (require 'tramp-container)
+    ;; Defer loading until tramp is actually used
+    (with-eval-after-load 'tramp
+      (require 'tramp-container))
 
     (with-eval-after-load 'tramp
       (add-to-list 'tramp-methods
@@ -815,8 +843,11 @@ enjoy using a lot.
     (define-key project-prefix-map "s" #'project-shell)
     (define-key project-prefix-map "d" #'project-dired))
 
-  (when (file-directory-p "~/work/repos")
-    (project-remember-projects-under "~/work/repos" t))
+  ;; Defer project scanning to idle time
+  (run-with-idle-timer 3 nil
+    (lambda ()
+      (when (file-directory-p "~/work/repos")
+        (project-remember-projects-under "~/work/repos" t))))
 #+end_src
 ** Templates
 #+begin_src emacs-lisp
@@ -832,9 +863,13 @@ enjoy using a lot.
     (yas-reload-all)
     )
 
-  (use-package ivy-yasnippet)
+  (use-package ivy-yasnippet
+    :defer t
+    :commands (ivy-yasnippet))
 
-  (use-package auto-yasnippet)
+  (use-package auto-yasnippet
+    :defer t
+    :commands (aya-create aya-expand aya-persist-snippet))
 
 #+end_src
 
@@ -888,7 +923,9 @@ enjoy using a lot.
     (use-package lsp-treemacs
       :after lsp)
 
-    (use-package lsp-ivy)
+    (use-package lsp-ivy
+      :defer t
+      :commands (lsp-ivy-workspace-symbol lsp-ivy-global-workspace-symbol))
 
     ;; (use-package dap-mode
     ;; ;; Uncomment the config below if you want all UI panes to be hidden by default!
@@ -916,7 +953,7 @@ enjoy using a lot.
 : evilnc-comment-or-uncomment-lines
 *** LSP optimization settings
 #+begin_src emacs-lisp
-  (setq gc-cons-threshold 100000000)
+  ;; gc-cons-threshold is now set at the beginning of init
   (setq read-process-output-max (* 1024 1024))
 #+end_src
 ** Python
@@ -953,19 +990,21 @@ enjoy using a lot.
 ** Jupyter
 #+begin_src emacs-lisp
   ;; Install jupyter package
-  (use-package jupyter)
+  (use-package jupyter
+    :defer t
+    :commands (jupyter-run-repl jupyter-connect-repl jupyter-eval-region))
 
   ;; have to see why I need ensure nil here (ensure-package-ensure-guix behavior)
   (use-package drepl
     :ensure nil
-    :init
-    (require 'drepl-ipython)
+    :defer t
+    :commands (drepl drepl-ipython)
     :config
-  )
+    (require 'drepl-ipython))
 
   (use-package code-cells
-    :init
-    (add-hook 'python-mode-hook 'code-cells-mode-maybe)
+    :defer t
+    :hook (python-mode . code-cells-mode-maybe)
   ;;   (add-hook 'code-cells-mode-hook #'code-cells-convert-ipynb)
     :config
     ;; ;; Configure code-cells to use jupyter for evaluation
@@ -1021,7 +1060,9 @@ enjoy using a lot.
 #+begin_src emacs-lisp
   ;; (use-package jupyter)
 
-  (use-package pyvenv)
+  (use-package pyvenv
+    :defer t
+    :commands (pyvenv-activate pyvenv-workon pyvenv-deactivate))
 #+end_src
 
 #+RESULTS:
@@ -1125,13 +1166,16 @@ enjoy using a lot.
       (prog-mode . smerge-mode))
 
 
-  (use-package eat)
-    
-    (use-package claude-code-ide
+  (use-package eat
+    :defer t
+    :commands (eat eat-project))
+
+  (use-package claude-code-ide
     :straight (:type git :host github :repo "manzaltu/claude-code-ide.el")
+    :defer t
+    :commands (claude-code-ide-start)
     :config
-    (setq claude-code-ide-terminal-backend 'eat)
-    )
+    (setq claude-code-ide-terminal-backend 'eat))
 
 
 
@@ -1239,7 +1283,9 @@ enjoy using a lot.
 
 ** Org Tree Slide
 #+begin_src emacs-lisp
-  (use-package hide-lines)
+  (use-package hide-lines
+    :defer t
+    :commands (hide-lines-matching hide-lines-show-all))
 
   (defun my/hide-headers ()
     ;; hide block begin/end markers
@@ -1260,13 +1306,12 @@ enjoy using a lot.
 
 
   (use-package org-tree-slide
+    :defer t
+    :commands (org-tree-slide-mode)
     :custom
     (org-image-actual-width nil)
     (org-tree-slide-header nil)
-    (org-tree-slide-heading-emphasis t)
-    ;:hook ((org-tree-slide-play . my:hide-headers)
-    ;(org-tree-slide-stop . my:show-headers))
-    )
+    (org-tree-slide-heading-emphasis t))
 #+end_src
 
 #+RESULTS:
@@ -1301,7 +1346,9 @@ enjoy using a lot.
 * Great Packages
 ** Magit
 #+begin_src emacs-lisp
-       (use-package magit)
+  (use-package magit
+    :defer t
+    :commands (magit-status magit-dispatch magit-file-dispatch))
 #+end_src
 
 #+RESULTS:
@@ -1321,11 +1368,11 @@ enjoy using a lot.
 
 #+begin_src emacs-lisp
   (use-package elfeed
+    :defer t
+    :commands (elfeed elfeed-update)
     :config
     (setq elfeed-feeds
-      '("https://planet.emacslife.com/atom.xml")
-      )
-    )
+      '("https://planet.emacslife.com/atom.xml")))
 
 #+end_src
 
