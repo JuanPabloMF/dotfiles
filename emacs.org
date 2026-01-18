@@ -382,82 +382,84 @@ enjoy using a lot.
 * Keybindings
 ** General
 #+begin_src emacs-lisp
+  (defmacro my/general-define-key (args)
+    `(progn ,@(mapcar (lambda (arglist)
+  		      `(general-def ,@arglist :package 'general))
+  		    args)))
 
-  ;; Emacs oriented keybinding. Do good, not evil!
-  ;; An interesting link for this is
-  ;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
+    ;; Emacs oriented keybinding. Do good, not evil!
+    ;; An interesting link for this is
+    ;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
 
-  (use-package general
-    :config
-    (my/general-define-key
-     (("M-w" 'easy-kill
-       "C-@" 'er/expand-region
-       "C-s" 'my/swiper-isearch-dwim
-       "M-s" 'swiper
-       "C-M-s" 'avy-goto-char
-       "C-x o" 'other-window
-       "M-o" 'ace-window 
-       "C-x C-b" 'persp-counsel-switch-buffer
-       "C-c r e" 'jump-to-register-end-of-line
-       "C-c j y" 'my/bmkp-copy-file-path
-       ;; "C-x x" 'persp-mode-prefix-key
-       )
-      ("C-c a" 'aider-transient-menu
-     "C-c w" 'hydra-window/body
-   "C-c p" 'projectile-command-map
-       ;; "C-c b" 'my/eaf-open-browser	
-       ;; "C-c B" 'hydra-browser/body
-       "C-c g" 'gptel-menu
-       "C-c e" 'elfeed
-       "C-c s w" 'aya-create
-       "C-c s y" 'aya-expand
-       "C-c s l" 'ivy-yasnippet
-       "C-c s s" 'aya-persist-snippet
-       "C->" 'mc/mark-next-like-this
-       "C-<" 'mc/mark-previous-like-this
-       "C-c C->" 'mc/mark-all-like-this
-       "C-S-c C-S-c" 'mc/edit-lines
-       )
-      (lsp-mode-map
-       "C-c l u r" 'lsp-ui-peek-find-references
-       "C-c l u d" 'lsp-ui-peek-find-definitions
-       "C-c l u g" 'lsp-ui-doc-glance
-       "C-c l u f" 'lsp-ui-doc-focus-frame
-       "C-c l u m" 'lsp-ui-imenu
-       "C-c l u t" 'lsp-treemacs-symbols
-       )
-      (python-mode-map
-       "C-M-b" 'python-nav-backward-block
-       "C-M-f" 'python-nav-forward-block
-       "C-M-a" 'python-nav-backward-defun
-       "C-M-e" 'python-nav-forward-defun
-       "C-M-u" 'python-nav-up-list
-       "\r" 'newline-and-indent
-       )
-      (minibuffer-local-map
-       "C-r" 'counsel-minibuffer-history)
+    (use-package general
+      :config
+      (my/general-define-key
+       (("M-w" 'easy-kill
+         "C-@" 'er/expand-region
+         "C-s" 'my/swiper-isearch-dwim
+         "M-s" 'swiper
+         "C-M-s" 'avy-goto-char
+         "C-x o" 'other-window
+         "M-o" 'ace-window 
+         "C-x C-b" 'persp-counsel-switch-buffer
+         "C-c r e" 'jump-to-register-end-of-line
+         "C-c j y" 'my/bmkp-copy-file-path
+         ;; "C-x x" 'persp-mode-prefix-key
+         )
+        ("C-c c" 'claude-code-ide-menu
+         "C-c w" 'hydra-window/body
+         "C-c p" 'projectile-command-map
+         "C-c g" 'gptel-menu
+         "C-c e" 'elfeed
+         "C-c s w" 'aya-create
+         "C-c s y" 'aya-expand
+         "C-c s l" 'ivy-yasnippet
+         "C-c s s" 'aya-persist-snippet
+         "C->" 'mc/mark-next-like-this
+         "C-<" 'mc/mark-previous-like-this
+         "C-c C->" 'mc/mark-all-like-this
+         "C-S-c C-S-c" 'mc/edit-lines
+         )
+        (lsp-mode-map
+         "C-c l u r" 'lsp-ui-peek-find-references
+         "C-c l u d" 'lsp-ui-peek-find-definitions
+         "C-c l u g" 'lsp-ui-doc-glance
+         "C-c l u f" 'lsp-ui-doc-focus-frame
+         "C-c l u m" 'lsp-ui-imenu
+         "C-c l u t" 'lsp-treemacs-symbols
+         )
+        (python-mode-map
+         "C-M-b" 'python-nav-backward-block
+         "C-M-f" 'python-nav-forward-block
+         "C-M-a" 'python-nav-backward-defun
+         "C-M-e" 'python-nav-forward-defun
+         "C-M-u" 'python-nav-up-list
+         "\r" 'newline-and-indent
+         )
+        (minibuffer-local-map
+         "C-r" 'counsel-minibuffer-history)
 
-      (bookmark-bmenu-mode-map
-         "C-c y" 'my/bmkp-copy-file-path-at-point)
+        (bookmark-bmenu-mode-map
+           "C-c y" 'my/bmkp-copy-file-path-at-point)
 
-       (dired-mode-map
-              "C-o" 'casual-dired-tmenu
-              "s" 'casual-dired-sort-by-tmenu
-              "/" 'casual-dired-search-replace-tmenu)
+         (dired-mode-map
+                "C-o" 'casual-dired-tmenu
+                "s" 'casual-dired-sort-by-tmenu
+                "/" 'casual-dired-search-replace-tmenu)
 
-            (Info-mode-map 
-              "C-o" 'casual-info-tmenu)
+              (Info-mode-map 
+                "C-o" 'casual-info-tmenu)
 
-            (bookmark-bmenu-mode-map
-              "C-o" 'casual-bookmarks-tmenu
-              "S" 'casual-bookmarks-sortby-tmenu
-              "J" 'bookmark-jump)
+              (bookmark-bmenu-mode-map
+                "C-o" 'casual-bookmarks-tmenu
+                "S" 'casual-bookmarks-sortby-tmenu
+                "J" 'bookmark-jump)
 
-            (reb-mode-map 
-              "C-o" 'casual-re-builder-tmenu)
+              (reb-mode-map 
+                "C-o" 'casual-re-builder-tmenu)
 
-            
-  )))
+              
+    )))
 #+end_src
 
 #+RESULTS:
