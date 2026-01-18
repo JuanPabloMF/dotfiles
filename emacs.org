@@ -243,10 +243,6 @@
 ** Macros
 
 #+begin_src emacs-lisp
-(defmacro my/general-define-key (args)
-  `(progn ,@(mapcar (lambda (arglist)
-		      `(general-def ,@arglist :package 'general))
-		    args)))
 (use-package s)
 (defmacro f-string (fmt)
   "Like `s-format' but with format fields in it.
