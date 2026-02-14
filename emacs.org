@@ -841,11 +841,7 @@ enjoy using a lot.
     (define-key project-prefix-map "s" #'project-shell)
     (define-key project-prefix-map "d" #'project-dired))
 
-  ;; Defer project scanning to idle time
-  (run-with-idle-timer 3 nil
-    (lambda ()
-      (when (file-directory-p "~/work/repos")
-        (project-remember-projects-under "~/work/repos" t))))
+  
 #+end_src
 ** Templates
 #+begin_src emacs-lisp
