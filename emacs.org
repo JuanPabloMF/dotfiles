@@ -197,11 +197,6 @@
     (dashboard-setup-startup-hook)
     (dashboard-modify-heading-icons '((recents . "file-text")
                                       (bookmarks . "book"))))
-
-  ;; (defun my/initial-window-buffer-setup ()
-  ;;   (switch-to-buffer-other-window "*scratch*")
-  ;;   (switch-to-buffer-other-window "*dashboard*")
-  ;; )
 #+end_src
 *** Disable Bell
 #+begin_src emacs-lisp
@@ -406,7 +401,8 @@ enjoy using a lot.
          "C-c j y" 'my/bmkp-copy-file-path
          ;; "C-x x" 'persp-mode-prefix-key
          )
-        ("C-c c" 'claude-code-ide-menu
+        ("C-c a" 'agent-shell
+         "C-c c" 'claude-code-ide-menu
          "C-c w" 'hydra-window/body
          "C-c p" 'projectile-command-map
          "C-c g" 'gptel-menu
@@ -596,6 +592,14 @@ enjoy using a lot.
 (use-package ace-window
   :defer t
   :commands (ace-window ace-select-window))
+#+end_src
+
+** Winpulse
+#+begin_src emacs-lisp
+(use-package winpulse
+  :straight (:type git :host github :repo "xenodium/winpulse")
+  :config
+  (winpulse-mode 1))
 #+end_src
 
 ** Expand
@@ -1064,100 +1068,86 @@ enjoy using a lot.
 ** GPTs and AI
 #+begin_src emacs-lisp
 
-    ;; This could be simplified by just calling (make-*) and setting .authinfo with api endpoint and apikey as USER
-    (defun get-authinfo-password (machine)
-      "Read password from encrypted authinfo file."
-      (let* ((auth-sources '("~/.authinfo"))
-             (auth-info (auth-source-search :host machine :max 1)))
-        (if auth-info
-            (let ((secret (plist-get (car auth-info) :secret)))
-              (if (functionp secret)
-                  (funcall secret)
-                secret))
-          (message "No matching auth info found for %s" machine))))
+  ;; This could be simplified by just calling (make-*) and setting .authinfo with api endpoint and apikey as USER
+  (defun get-authinfo-password (machine)
+    "Read password from encrypted authinfo file."
+    (let* ((auth-sources '("~/.authinfo"))
+           (auth-info (auth-source-search :host machine :max 1)))
+      (if auth-info
+          (let ((secret (plist-get (car auth-info) :secret)))
+            (if (functionp secret)
+                (funcall secret)
+              secret))
+        (message "No matching auth info found for %s" machine))))
 
 
 
-    (use-package gptel
-      :straight t
-      :defer t
-      :commands (gptel gptel-menu gptel-send)
-      :config
-      ;; Load backend modules
-      (setq gptel-track-media t)
-      (setq gptel-use-tools t)
-      (setq gptel-model 'claude-3-7-sonnet-20250219)
-      (gptel-make-gemini "Gemini"
-        :stream t
-        :key (get-authinfo-password "gemini.com"))
-      (setq
-       gptel-backend (gptel-make-anthropic "Claude"
-                       :stream t
-                       :key (get-authinfo-password "anthropic.com")))
-      (gptel-make-tool
-       :function (lambda (url)
-                   (with-current-buffer (url-retrieve-synchronously url)
-    		 (goto-char (point-min))
-    		 (forward-paragraph)
-    		 (let ((dom (libxml-parse-html-region (point) (point-max))))
-                       (run-at-time 0 nil #'kill-buffer (current-buffer))
-                       (with-temp-buffer
-                         (shr-insert-document dom)
-                         (buffer-substring-no-properties (point-min) (point-max))))))
-       :name "read_url"
-       :description "Fetch and read the contents of a URL"
-       :args (list '(:name "url"
-    		       :type string
-    		       :description "The URL to read"))
-       :category "web")
-      )
+  (use-package gptel
+    :straight t
+    :defer t
+    :commands (gptel gptel-menu gptel-send)
+    :config
+    ;; Load backend modules
+    (setq gptel-track-media t)
+    (setq gptel-use-tools t)
+    (setq gptel-model 'claude-sonnet-4-6)
+    (gptel-make-gemini "Gemini"
+      :stream t
+      :key (get-authinfo-password "gemini.com"))
+    (setq
+     gptel-backend (gptel-make-anthropic "Claude"
+                     :stream t
+                     :key (get-authinfo-password "anthropic.com")))
+    (gptel-make-tool
+     :function (lambda (url)
+                 (with-current-buffer (url-retrieve-synchronously url)
+              	 (goto-char (point-min))
+              	 (forward-paragraph)
+              	 (let ((dom (libxml-parse-html-region (point) (point-max))))
+                     (run-at-time 0 nil #'kill-buffer (current-buffer))
+                     (with-temp-buffer
+                       (shr-insert-document dom)
+                       (buffer-substring-no-properties (point-min) (point-max))))))
+     :name "read_url"
+     :description "Fetch and read the contents of a URL"
+     :args (list '(:name "url"
+              	       :type string
+              	       :description "The URL to read"))
+     :category "web")
+    )
 
 
 
-    ;; Add this to your init.el
+  ;; Add this to your init.el
 
-    (with-eval-after-load 'gptel-transient
-      ;; Define the suffix command
-      (transient-define-suffix gptel--suffix-jump-to-gptel-buffer ()
-        "Jump to an existing gptel buffer or create a new one."
-        :key "j"
-        :description "Jump to gptel buffer"
-        :transient nil
-        (interactive)
-        (let* ((gptel-buffers (cl-loop for buf in (buffer-list)
-                                       when (buffer-local-value 'gptel-mode buf)
-                                       collect (buffer-name buf)))
-               (default-name (concat "*" (gptel-backend-name gptel-backend) "*"))
-               (buffer-name (completing-read 
-                             (format "GPTel buffer (default %s): " default-name)
-                             gptel-buffers
-                             nil nil nil nil
-                             default-name)))
-          (gptel buffer-name)))
-      
-      ;; Add the suffix to the gptel-menu transient
-      (transient-append-suffix 'gptel-menu
-        '(0 0 0) ; This targets the suffix after the first suffix in the first group
-        '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer)))
+  (with-eval-after-load 'gptel-transient
+    ;; Define the suffix command
+    (transient-define-suffix gptel--suffix-jump-to-gptel-buffer ()
+      "Jump to an existing gptel buffer or create a new one."
+      :key "j"
+      :description "Jump to gptel buffer"
+      :transient nil
+      (interactive)
+      (let* ((gptel-buffers (cl-loop for buf in (buffer-list)
+                                     when (buffer-local-value 'gptel-mode buf)
+                                     collect (buffer-name buf)))
+             (default-name (concat "*" (gptel-backend-name gptel-backend) "*"))
+             (buffer-name (completing-read 
+                           (format "GPTel buffer (default %s): " default-name)
+                           gptel-buffers
+                           nil nil nil nil
+                           default-name)))
+        (gptel buffer-name)))
+    
+    ;; Add the suffix to the gptel-menu transient
+    (transient-append-suffix 'gptel-menu
+      '(0 0 0) ; This targets the suffix after the first suffix in the first group
+      '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer)))
 
-    ;; Alternatively, if you want to place it in a specific section, you can use something like:
-    ;; (transient-append-suffix 'gptel-menu '("SPC") 
-    ;;   '("j" "Jump to gptel buffer" gptel--suffix-jump-to-gptel-buffer))
-
-    ;; (use-package wingman
-    ;; :straight (:type git :host github :repo "mjrusso/wingman")
-    ;; :hook (prog-mode . wingman-mode)
-    ;; :config
-    ;; ;; Add your custom configuration here
-    ;; (setq wingman-model-name "llama3:latest")
-    ;; (setq wingman-llama-endpoint "http://127.0.0.1:8012/infill")
-    ;; (setq wingman-ring-n-chunks 0)
-    ;; )
-
-    (use-package smerge-mode
-      :ensure nil
-      :hook
-      (prog-mode . smerge-mode))
+  (use-package smerge-mode
+    :ensure nil
+    :hook
+    (prog-mode . smerge-mode))
 
 
   (use-package eat
@@ -1171,70 +1161,58 @@ enjoy using a lot.
     :config
     (setq claude-code-ide-terminal-backend 'eat))
 
+  (use-package shell-maker
+    :straight t
+    :defer t)
 
+  (use-package acp
+    :straight (:type git :host github :repo "xenodium/acp.el")
+    :defer t)
 
+  (use-package agent-shell
+    :straight (:type git :host github :repo "xenodium/agent-shell")
+    :defer t
+    :commands (agent-shell)
+    :config
+    (setq agent-shell-anthropic-claude-environment
+          (agent-shell-make-environment-variables :inherit-env t))
+    (setq agent-shell-anthropic-authentication
+          (agent-shell-anthropic-make-authentication :login t))
+    (setq agent-shell-show-usage-at-turn-end t)
+    (setq agent-shell-preferred-agent-config
+          (agent-shell-anthropic-make-claude-code-config))
+    (setq agent-shell-display-action
+          '(display-buffer-pop-up-window))
+    (defun my/agent-shell-dired-marked-only ()
+      "Return context for dired marked files only, ignoring file at point."
+      (when (derived-mode-p 'dired-mode)
+        (save-excursion
+          (goto-char (point-min))
+          ;; Only proceed if there are files explicitly marked with *.
+          (when (re-search-forward (dired-marker-regexp) nil t)
+            (agent-shell--get-files-context
+             :files (dired-get-marked-files))))))
+    (add-hook 'dired-mode-hook
+              (lambda ()
+                (setq-local agent-shell-context-sources
+                            '(my/agent-shell-dired-marked-only region error)))))
 
-    ;; (use-package codeium
-    ;;   :ensure nil)
+  (use-package websocket
+    :straight t)
 
-    ;; (use-package aider
-    ;;   :config
-    ;;   ;; For latest claude sonnet model
-    ;;   (setq aider-args '("--model" "sonnet" "--no-auto-accept-architect"))
-    ;;   (setenv "ANTHROPIC_API_KEY;; " (get-authinfo-password "anthropic.com"))
-
-
-    ;; (use-package copilot
-    ;;   :after corfu
-    ;;   :hook (python-mode . copilot-mode)
-    ;;   :custom
-    ;;   (copilot-node-executable "/home/juanpablo/.guix-home/profile/bin/node")
-    ;;   :bind ((:map prog-mode-map
-    ;;                ("M-k" . copilot-complete))
-    ;;          (:map copilot-completion-map
-    ;;                ("M-l" . copilot-accept-completion)
-    ;;                ("M-1" . copilot-accept-completion-by-word)
-    ;;                ("M-2" . copilot-accept-completion-by-line))))
-
-
-    ;; (use-package claude-code
-    ;;   :config
-    ;;   (add-to-list 'exec-path "/home/juanpablo/.npm-global/bin")
-    ;;   (setq claude-code-program (executable-find "claude"))
-    ;;   )
-
-      ;; Or chatgpt model
-      ;; (setq aider-args '("--model" "o4-mini"))
-      ;; (setenv "OPENAI_API_KEY" <your-openai-api-key>)
-      ;; Or gemini model
-      ;; (setq aider-args '("--model" "gemini-exp"))
-      ;; (setenv "GEMINI_API_KEY" <your-gemini-api-key>)
-      ;; Or use your personal config file
-      ;; (setq aider-args `("--config" ,(expand-file-name "~/.aider.conf.yml")))
-      ;; ;;
-      ;; Optional: Set a key binding for the transient menu
-      ;; )
-    ;; (use-package elysium
-    ;;   :elpaca (elysium
-
-    ;;     	     :host github
-    ;;     	     :repo "lanceberge/elysium"
-    ;;     	     )
-    ;;   :custom
-    ;;   ;; Below are the default values
-    ;;   (elysium-window-size 0.33) ; The elysium buffer will be 1/3 your screen
-    ;;   (elysium-window-style 'vertical)) ; Can be customized to horizontal
-
-    ;; (use-package aider
-    ;;   :elpaca (:host github :repo "tninja/aider.el" :files ("aider.el"))
-    ;;   :config
-    ;;   ;; Use claude-3-5-sonnet cause it is best in aider benchmark 
-    ;;   (setq aider-args '("--model" "anthropic/claude-3-5-sonnet-20241022"))
-    ;;   ;;(setenv "ANTHROPIC_API_KEY" gptel-api-key)
-    ;;   (global-set-key (kbd "C-c a") 'aider-transient-menu))
-
-    ;; (use-package transient)
-
+  (use-package agent-shell-to-go
+    :straight (:host github :repo "ElleNajt/agent-shell-to-go")
+    :after (agent-shell websocket)
+    :config
+    (setq agent-shell-to-go-authorized-users '("U0AFSV2K0UC"))
+    (setq agent-shell-to-go-debug t)
+    (setq agent-shell-to-go-bot-token
+          (string-trim (shell-command-to-string "/home/juanpablo/.nix-profile/bin/op item get slack/agent-shell-bot-token --vault automation --fields password --reveal")))
+    (setq agent-shell-to-go-channel-id
+          (string-trim (shell-command-to-string "/home/juanpablo/.nix-profile/bin/op item get slack/agent-shell-channel-id --vault automation --fields password --reveal")))
+    (setq agent-shell-to-go-app-token
+          (string-trim (shell-command-to-string "/home/juanpablo/.nix-profile/bin/op item get slack/agent-shell-app-token --vault automation --fields password --reveal")))
+    (agent-shell-to-go-setup))
 
 #+end_src
 
