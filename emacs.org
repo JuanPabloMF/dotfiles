@@ -232,13 +232,14 @@ enjoy using a lot."
      "C-<" 'mc/mark-previous-like-this
      "C-c C->" 'mc/mark-all-like-this
      "C-S-c C-S-c" 'mc/edit-lines)
-    (lsp-mode-map
-     "C-c l u r" 'lsp-ui-peek-find-references
-     "C-c l u d" 'lsp-ui-peek-find-definitions
-     "C-c l u g" 'lsp-ui-doc-glance
-     "C-c l u f" 'lsp-ui-doc-focus-frame
-     "C-c l u m" 'lsp-ui-imenu
-     "C-c l u t" 'lsp-treemacs-symbols)
+    (eglot-mode-map
+     "C-c l u r" 'xref-find-references
+     "C-c l u d" 'xref-find-definitions
+     "C-c l u g" 'eldoc
+     "C-c l u m" 'imenu
+     "C-c l u a" 'eglot-code-actions
+     "C-c l u n" 'eglot-rename
+     "C-c l u f" 'eglot-format)
     (python-mode-map
      "C-M-b" 'python-nav-backward-block
      "C-M-f" 'python-nav-forward-block
@@ -492,9 +493,9 @@ enjoy using a lot."
 ** In-buffer Completion
 ** Syntax Checking
 #+begin_src emacs-lisp
-(use-package flycheck
-  :defer t
-  :hook (lsp-mode . flycheck-mode))
+(use-package flymake
+  :ensure nil
+  :hook (eglot-managed-mode . flymake-mode))
 #+end_src
 
 #+RESULTS:
@@ -502,39 +503,21 @@ enjoy using a lot."
 ** LSP
 
 #+begin_src emacs-lisp
-(defun my/lsp-mode-setup ()
-  (setq lsp-headerline-breadcrumb-segments '(path-up-to-project file symbols))
-  (lsp-headerline-breadcrumb-mode))
-
-(defun my/lsp-mode-setup-completion ()
-  (setf (alist-get 'styles (alist-get 'lsp-capf completion-category-defaults))
-        '(flex)))
-
-(use-package lsp-mode
-  :custom
-  (lsp-completion-provider :none)
-  :commands (lsp lsp-deferred)
+(use-package eglot
+  :ensure nil
+  :commands (eglot eglot-ensure)
   :hook
-  (lsp-mode . my/lsp-mode-setup)
-  (lsp-completion-mode . my/lsp-mode-setup-completion)
+  (python-mode . eglot-ensure)
   :init
-  (setq lsp-keymap-prefix "C-c l")
   (add-to-list 'exec-path "/home/juanpablo/miniconda3/bin")
   :config
-  (lsp-enable-which-key-integration t))
-
-(use-package lsp-ui
-  :hook (lsp-mode . lsp-ui-mode)
-  :custom
-  (lsp-ui-doc-position 'bottom)
-  (lsp-ui-imenu-buffer-position 'left))
-
-(use-package lsp-treemacs
-  :after lsp)
-
-(use-package lsp-ivy
-  :defer t
-  :commands (lsp-ivy-workspace-symbol lsp-ivy-global-workspace-symbol))
+  (setq read-process-output-max (* 1024 1024))
+  (fset #'jsonrpc--log-event #'ignore)
+  ;; Flex completion style for LSP completions
+  (setq completion-category-defaults
+        (assq-delete-all 'eglot completion-category-defaults))
+  (add-to-list 'completion-category-defaults
+               '(eglot (styles flex))))
 
 (use-package evil-nerd-commenter
   :bind ("M-/" . evilnc-comment-or-uncomment-lines))
@@ -542,11 +525,6 @@ enjoy using a lot."
 
 #+RESULTS:
 : evilnc-comment-or-uncomment-lines
-*** LSP optimization settings
-#+begin_src emacs-lisp
-;; gc-cons-threshold is now set at the beginning of init
-(setq read-process-output-max (* 1024 1024))
-#+end_src
 ** Python
 
 #+begin_src emacs-lisp
