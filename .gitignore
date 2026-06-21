@@ -1,0 +1,28 @@
+.aider*
+.env
+
+# Package manager / build caches (vendored upstream clones)
+/straight/
+/site-lisp/
+/eln-cache/
+/elpa/
+/.cache/
+
+# Core dumps / native compilation output
+/core
+*.elc
+
+# Runtime state (no-littering & friends)
+/data/
+/recentf.eld
+/projects.eld
+/tramp
+/transient/
+/.agent-shell/
+/agent-shell/
+/emacs.org_archive
+
+# Emacs backups / autosaves / lockfiles
+*~
+\#*\#
+.\#*

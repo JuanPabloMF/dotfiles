@@ -251,7 +251,22 @@ enjoy using a lot."
      "C-M-u" 'python-nav-up-list
      "\r" 'newline-and-indent)
     (minibuffer-local-map
-     "C-r" 'counsel-minibuffer-history))))
+     "C-r" 'counsel-minibuffer-history)
+    (agent-shell-mode-map
+     "C-c | g" 'my/agent-pipe-grab
+     "C-c | a" 'my/agent-pipe-ask
+     "C-c | f" 'my/agent-pipe-ask-fresh
+     "C-c | c" 'my/agent-pipe-cancel)
+    (agent-shell-viewport-edit-mode-map
+     "C-c | g" 'my/agent-pipe-grab
+     "C-c | a" 'my/agent-pipe-ask
+     "C-c | f" 'my/agent-pipe-ask-fresh
+     "C-c | c" 'my/agent-pipe-cancel)
+    (agent-shell-viewport-view-mode-map
+     "C-c | g" 'my/agent-pipe-grab
+     "C-c | a" 'my/agent-pipe-ask
+     "C-c | f" 'my/agent-pipe-ask-fresh
+     "C-c | c" 'my/agent-pipe-cancel))))
 #+end_src
 
 #+RESULTS:
@@ -726,138 +741,303 @@ enjoy using a lot."
               (setq-local agent-shell-context-sources
                           '(my/agent-shell-dired-marked-only region error))))
 
-  ;; --- Deep Research via Gemini ---
-  (defvar my/deep-research--active nil
-    "Plist tracking active research session.
-Keys: :gemini-buffer :claude-buffer :subscription :query :kill-after :initialized")
+  ;; --- Agent-shell pipe ---
+  ;; Move bytes between agent-shell buffers (and their viewports).
+  ;; Spec: docs/superpowers/specs/2026-06-11-agent-shell-pipe-design.md
+  (defun my/agent-pipe-default-wrap (content source-name query)
+    "Default wrapper: tag CONTENT with SOURCE-NAME and optional QUERY."
+    (concat (format "<from %s>\n" source-name)
+            (when query (format "Query: %s\n\n" query))
+            content
+            (format "\n</from %s>" source-name)))
 
-  (defun my/deep-research--on-complete (_event)
-    "Handle Gemini prompt-ready: send query on init, extract response on completion."
-    (when my/deep-research--active
-      (let ((gemini-buffer (plist-get my/deep-research--active :gemini-buffer))
-            (claude-buffer (plist-get my/deep-research--active :claude-buffer))
-            (subscription (plist-get my/deep-research--active :subscription))
-            (query (plist-get my/deep-research--active :query))
-            (kill-after (plist-get my/deep-research--active :kill-after)))
-        (if (not (plist-get my/deep-research--active :initialized))
-            ;; First prompt-ready: Gemini initialized, send the query
-            (progn
-              (plist-put my/deep-research--active :initialized t)
-              (with-current-buffer gemini-buffer
-                (agent-shell--insert-to-shell-buffer
-                 :shell-buffer gemini-buffer
-                 :text query
-                 :submit t
-                 :no-focus t))
-              (message "Deep research: query sent to Gemini, researching..."))
-          ;; Second prompt-ready: Gemini finished, extract and inject
-          (when subscription
-            (with-current-buffer gemini-buffer
-              (agent-shell-unsubscribe :subscription subscription)))
-          (let ((response (with-current-buffer gemini-buffer
-                            (shell-maker-last-output))))
-            (if (and response (not (string-empty-p (string-trim response))))
-                (progn
-                  (let ((formatted (format "\n\n--- Gemini Deep Research ---\nQuery: %s\n\n%s\n--- End Research ---\n"
-                                           query response)))
-                    (if (buffer-live-p claude-buffer)
-                        (progn
-                          (agent-shell-viewport--show-buffer
-                           :append formatted
-                           :shell-buffer claude-buffer)
-                          (message "Deep research complete. Review and send with C-c C-c."))
-                      (message "Deep research done but Claude Code buffer was killed.")))
-                  (when (and kill-after (buffer-live-p gemini-buffer))
-                    (kill-buffer gemini-buffer)))
-              (message "Deep research: Gemini returned empty response.")))
-          (setq my/deep-research--active nil)))))
+  (defcustom my/agent-pipe-wrap-format #'my/agent-pipe-default-wrap
+    "Function called as (FN CONTENT SOURCE-NAME QUERY) to wrap piped content.
+QUERY is nil in grab mode, the query string in ask/ask-fresh mode.
+Return the wrapped string.  Set to nil to paste raw without wrapping."
+    :type '(choice (const :tag "Raw, no wrapping" nil)
+                   (function :tag "Wrapping function")))
 
-  (defun my/deep-research (query &optional kill-after)
-    "Run deep research via Gemini in background, inject results into Claude Code viewport.
-With prefix arg, kill Gemini buffer after extraction."
-    (interactive
-     (list (if (use-region-p)
-               (buffer-substring-no-properties (region-beginning) (region-end))
-             (read-string "Deep research query: "))
-           current-prefix-arg))
-    (when (string-empty-p (string-trim query))
-      (user-error "Empty research query"))
-    (when my/deep-research--active
-      (user-error "Research already in progress. Wait for it to complete"))
-    (let ((claude-buffer (cond
-                          ((derived-mode-p 'agent-shell-mode)
-                           (current-buffer))
-                          ((or (derived-mode-p 'agent-shell-viewport-view-mode)
-                               (derived-mode-p 'agent-shell-viewport-edit-mode))
-                           (agent-shell-viewport--shell-buffer))
-                          (t
-                           (seq-find (lambda (buf)
-                                       (with-current-buffer buf
-                                         (and (derived-mode-p 'agent-shell-mode)
-                                              (string-match-p "Claude Code"
-                                                              (buffer-name buf)))))
-                                     (agent-shell-buffers))))))
-      (unless claude-buffer
-        (user-error "No Claude Code shell buffer found"))
-      (let ((gemini-buffer (agent-shell--start
-                            :config (agent-shell-google-make-gemini-config)
-                            :no-focus t
-                            :new-session t
-                            :session-strategy 'new)))
-        (unless gemini-buffer
-          (user-error "Failed to start Gemini shell"))
-        (setq my/deep-research--active
-              (list :gemini-buffer gemini-buffer
-                    :claude-buffer claude-buffer
-                    :query query
-                    :kill-after kill-after
-                    :initialized nil
-                    :subscription nil))
-        (let ((token (agent-shell-subscribe-to
-                      :shell-buffer gemini-buffer
-                      :event 'prompt-ready
-                      :on-event #'my/deep-research--on-complete)))
-          (plist-put my/deep-research--active :subscription token))
-        (message "Deep research started: \"%s\" -- Gemini initializing..."
-                 (truncate-string-to-width query 60 nil nil t)))))
+  (defcustom my/agent-pipe-default-config
+    #'agent-shell-google-make-gemini-config
+    "Config builder used by `my/agent-pipe-ask-fresh' to spawn a source."
+    :type 'function)
 
-  (defun my/deep-research-cancel ()
-    "Cancel any active deep research."
+  (defcustom my/agent-pipe-kill-fresh-source-after nil
+    "If non-nil, kill the freshly spawned source buffer after extraction."
+    :type 'boolean)
+
+  (defvar my/agent-pipe-config-builders
+    '(agent-shell-google-make-gemini-config
+      agent-shell-anthropic-make-claude-code-config
+      agent-shell-openai-make-codex-config
+      agent-shell-github-make-copilot-config
+      agent-shell-opencode-make-agent-config
+      agent-shell-auggie-make-agent-config
+      agent-shell-cursor-make-agent-config
+      agent-shell-qwen-make-agent-config
+      agent-shell-goose-make-agent-config
+      agent-shell-droid-make-agent-config
+      agent-shell-pi-make-agent-config)
+    "Config builders offered by `my/agent-pipe-ask-fresh' with `C-u'.")
+
+  (defvar-local my/agent-pipe--sticky-source nil
+    "Buffer-local sticky source pairing for `my/agent-pipe' commands.")
+
+  (defvar my/agent-pipe--inflight nil
+    "List of in-flight ask/ask-fresh pipes (plists).
+Keys: :source :dest :query :subscription :submit :fresh-spawn-p :initialized.")
+
+  (defun my/agent-pipe--dest-shell-buffer (buffer)
+    "Return the underlying shell buffer for BUFFER, or nil if not a pipe dest."
+    (with-current-buffer buffer
+      (cond
+       ((derived-mode-p 'agent-shell-mode) buffer)
+       ((or (derived-mode-p 'agent-shell-viewport-view-mode)
+            (derived-mode-p 'agent-shell-viewport-edit-mode))
+        (agent-shell-viewport--shell-buffer buffer)))))
+
+  (defun my/agent-pipe--ensure-dest (buffer)
+    "Signal `user-error' unless BUFFER is a valid pipe destination."
+    (unless (my/agent-pipe--dest-shell-buffer buffer)
+      (user-error "Not an agent-shell or viewport buffer")))
+
+  (defun my/agent-pipe--candidates (dest-buffer)
+    "Live `agent-shell' buffers, excluding the shell behind DEST-BUFFER."
+    (let ((self (my/agent-pipe--dest-shell-buffer dest-buffer)))
+      (seq-remove (lambda (b) (eq b self))
+                  (seq-filter #'buffer-live-p (agent-shell-buffers)))))
+
+  (defun my/agent-pipe--pick-source (dest-buffer &optional reprompt)
+    "Return a source `agent-shell' buffer for DEST-BUFFER.
+With REPROMPT non-nil, ignore the sticky cache."
+    (let* ((cached (and (not reprompt)
+                        (buffer-local-value 'my/agent-pipe--sticky-source
+                                            dest-buffer)))
+           (sticky (and cached (buffer-live-p cached) cached))
+           (candidates (my/agent-pipe--candidates dest-buffer))
+           (chosen
+            (cond
+             (sticky sticky)
+             ((null candidates)
+              (user-error "No other live agent-shell buffers"))
+             ((= 1 (length candidates)) (car candidates))
+             (t (get-buffer
+                 (completing-read
+                  "Pipe source: "
+                  (mapcar #'buffer-name candidates) nil t))))))
+      (with-current-buffer dest-buffer
+        (setq my/agent-pipe--sticky-source chosen))
+      chosen))
+
+  (cl-defun my/agent-pipe--inject (source-buffer dest-buffer content
+                                                 &key query submit)
+    "Inject CONTENT from SOURCE-BUFFER into DEST-BUFFER.
+QUERY is non-nil for ask/ask-fresh modes.  SUBMIT auto-sends in the dest."
+    (let ((wrapped (if my/agent-pipe-wrap-format
+                       (funcall my/agent-pipe-wrap-format
+                                content (buffer-name source-buffer) query)
+                     content)))
+      (with-current-buffer dest-buffer
+        (cond
+         ((derived-mode-p 'agent-shell-mode)
+          (agent-shell--insert-to-shell-buffer
+           :shell-buffer dest-buffer
+           :text wrapped
+           :submit submit
+           :no-focus t))
+         ((or (derived-mode-p 'agent-shell-viewport-view-mode)
+              (derived-mode-p 'agent-shell-viewport-edit-mode))
+          (when submit
+            (message
+             "agent-pipe: :submit ignored (viewport destination unsupported)"))
+          (agent-shell-viewport--show-buffer
+           :append wrapped
+           :shell-buffer (agent-shell-viewport--shell-buffer dest-buffer)))
+         (t (user-error "Pipe destination is not an agent-shell or viewport"))))))
+
+  (defun my/agent-pipe--dest-has-inflight-p (dest-buffer)
+    "Return non-nil if any in-flight pipe targets DEST-BUFFER."
+    (seq-some (lambda (p) (eq dest-buffer (plist-get p :dest)))
+              my/agent-pipe--inflight))
+
+  (defun my/agent-pipe--drop-entry (entry)
+    "Remove ENTRY from `my/agent-pipe--inflight'."
+    (setq my/agent-pipe--inflight (delq entry my/agent-pipe--inflight)))
+
+  (defun my/agent-pipe--make-handler (dest-buffer)
+    "Return a `prompt-ready' closure for pipes targeting DEST-BUFFER."
+    (lambda (_event)
+      (when-let* ((entry (seq-find
+                          (lambda (p) (eq dest-buffer (plist-get p :dest)))
+                          my/agent-pipe--inflight)))
+        (let ((source (plist-get entry :source))
+              (query  (plist-get entry :query))
+              (submit (plist-get entry :submit))
+              (fresh  (plist-get entry :fresh-spawn-p))
+              (sub    (plist-get entry :subscription)))
+          (cond
+           ((or (not (buffer-live-p source))
+                (not (buffer-live-p dest-buffer)))
+            (when (and sub (buffer-live-p source))
+              (with-current-buffer source
+                (agent-shell-unsubscribe :subscription sub)))
+            (my/agent-pipe--drop-entry entry))
+           ((not (plist-get entry :initialized))
+            (plist-put entry :initialized t)
+            (with-current-buffer source
+              (agent-shell--insert-to-shell-buffer
+               :shell-buffer source
+               :text query
+               :submit t
+               :no-focus t))
+            (message "agent-pipe: query sent to %s, waiting..."
+                     (buffer-name source)))
+           (t
+            (with-current-buffer source
+              (agent-shell-unsubscribe :subscription sub))
+            (let ((response (with-current-buffer source
+                              (shell-maker-last-output))))
+              (my/agent-pipe--drop-entry entry)
+              (if (and response
+                       (not (string-empty-p (string-trim response))))
+                  (progn
+                    (my/agent-pipe--inject source dest-buffer response
+                                           :query query :submit submit)
+                    (when (and fresh
+                               my/agent-pipe-kill-fresh-source-after
+                               (buffer-live-p source))
+                      (kill-buffer source))
+                    (message "agent-pipe: %s -> %s done"
+                             (buffer-name source)
+                             (buffer-name dest-buffer)))
+                (message "agent-pipe: %s returned empty response"
+                         (buffer-name source))))))))))
+
+  (defun my/agent-pipe--start-ask (source dest query submit fresh-spawn-p)
+    "Subscribe SOURCE for a two-phase ask flow into DEST."
+    (when (my/agent-pipe--dest-has-inflight-p dest)
+      (user-error "Pipe already in flight for this destination"))
+    (let* ((handler (my/agent-pipe--make-handler dest))
+           (entry (list :source source :dest dest :query query
+                        :subscription nil :submit submit
+                        :fresh-spawn-p fresh-spawn-p :initialized nil)))
+      (push entry my/agent-pipe--inflight)
+      (let ((token (agent-shell-subscribe-to
+                    :shell-buffer source
+                    :event 'prompt-ready
+                    :on-event handler)))
+        (plist-put entry :subscription token))
+      (message "agent-pipe: %s -> %s initializing..."
+               (buffer-name source) (buffer-name dest))))
+
+  (defun my/agent-pipe-grab ()
+    "Grab last output (or active region) from a source agent-shell.
+With `C-u' re-pick the source.  With `C-u C-u' also submit in the dest."
     (interactive)
-    (if my/deep-research--active
-        (let ((gemini-buffer (plist-get my/deep-research--active :gemini-buffer))
-              (subscription (plist-get my/deep-research--active :subscription)))
-          (when (and subscription gemini-buffer (buffer-live-p gemini-buffer))
-            (with-current-buffer gemini-buffer
-              (agent-shell-unsubscribe :subscription subscription)))
-          (when (and gemini-buffer (buffer-live-p gemini-buffer))
-            (when (y-or-n-p "Kill Gemini research buffer? ")
-              (kill-buffer gemini-buffer)))
-          (setq my/deep-research--active nil)
-          (message "Deep research cancelled."))
-      (message "No active deep research.")))
+    (my/agent-pipe--ensure-dest (current-buffer))
+    (let* ((dest (current-buffer))
+           (reprompt (equal current-prefix-arg '(4)))
+           (submit (equal current-prefix-arg '(16)))
+           (source (my/agent-pipe--pick-source dest reprompt))
+           (content (with-current-buffer source
+                      (if (use-region-p)
+                          (buffer-substring-no-properties
+                           (region-beginning) (region-end))
+                        (shell-maker-last-output)))))
+      (when (or (null content)
+                (string-empty-p (string-trim (or content ""))))
+        (user-error "Source %s has no content to grab" (buffer-name source)))
+      (my/agent-pipe--inject source dest content :submit submit)))
 
-  (define-key agent-shell-mode-map (kbd "C-c C-r") #'my/deep-research)
-  (with-eval-after-load 'agent-shell-viewport
-    (define-key agent-shell-viewport-edit-mode-map (kbd "C-c C-r") #'my/deep-research)
-    (define-key agent-shell-viewport-view-mode-map (kbd "C-c C-r") #'my/deep-research)))
+  (defun my/agent-pipe-ask ()
+    "Send a query to a source agent-shell; stage its answer in this buffer.
+With `C-u' re-pick the source.  With `C-u C-u' also submit in the dest."
+    (interactive)
+    (my/agent-pipe--ensure-dest (current-buffer))
+    (let* ((dest (current-buffer))
+           (reprompt (equal current-prefix-arg '(4)))
+           (submit (equal current-prefix-arg '(16)))
+           (source (my/agent-pipe--pick-source dest reprompt))
+           (query (if (use-region-p)
+                      (buffer-substring-no-properties
+                       (region-beginning) (region-end))
+                    (read-string (format "Query for %s: "
+                                         (buffer-name source))))))
+      (when (string-empty-p (string-trim query))
+        (user-error "Empty query"))
+      (my/agent-pipe--start-ask source dest query submit nil)))
 
-(use-package websocket
-  :straight t)
+  (defun my/agent-pipe-ask-fresh ()
+    "Spawn a fresh source agent-shell, ask QUERY, stage its answer here.
+With `C-u' pick the config builder.  With `C-u C-u' also submit in the dest."
+    (interactive)
+    (my/agent-pipe--ensure-dest (current-buffer))
+    (let* ((dest (current-buffer))
+           (pick-config (equal current-prefix-arg '(4)))
+           (submit (equal current-prefix-arg '(16)))
+           (builder (if pick-config
+                        (intern (completing-read
+                                 "Config builder: "
+                                 (mapcar #'symbol-name
+                                         my/agent-pipe-config-builders)
+                                 nil t))
+                      my/agent-pipe-default-config))
+           (query (if (use-region-p)
+                      (buffer-substring-no-properties
+                       (region-beginning) (region-end))
+                    (read-string "Query for fresh source: "))))
+      (when (string-empty-p (string-trim query))
+        (user-error "Empty query"))
+      (let ((source (agent-shell--start
+                     :config (funcall builder)
+                     :no-focus t
+                     :new-session t
+                     :session-strategy 'new)))
+        (unless source
+          (user-error "Failed to spawn fresh source"))
+        (my/agent-pipe--start-ask source dest query submit t))))
 
-(use-package agent-shell-to-go
-  :straight (:host github :repo "ElleNajt/agent-shell-to-go")
-  :after (agent-shell websocket)
-  :config
-  (setq agent-shell-to-go-authorized-users '("U0AFSV2K0UC"))
-  (setq agent-shell-to-go-debug t)
-  (setq agent-shell-to-go-bot-token
-        (string-trim (shell-command-to-string "/home/juanpablo/.nix-profile/bin/op item get slack/agent-shell-bot-token --vault automation --fields password --reveal")))
-  (setq agent-shell-to-go-channel-id
-        (string-trim (shell-command-to-string "/home/juanpablo/.nix-profile/bin/op item get slack/agent-shell-channel-id --vault automation --fields password --reveal")))
-  (setq agent-shell-to-go-app-token
-        (string-trim (shell-command-to-string "/home/juanpablo/.nix-profile/bin/op item get slack/agent-shell-app-token --vault automation --fields password --reveal")))
-  (agent-shell-to-go-setup))
+  (defun my/agent-pipe-cancel ()
+    "Cancel in-flight pipes targeting this buffer.
+With `C-u' cancel all in-flight pipes globally."
+    (interactive)
+    (let* ((all (equal current-prefix-arg '(4)))
+           (dest (current-buffer))
+           (targets (if all
+                        (copy-sequence my/agent-pipe--inflight)
+                      (seq-filter
+                       (lambda (p) (eq dest (plist-get p :dest)))
+                       my/agent-pipe--inflight))))
+      (if (null targets)
+          (message "No pipes to cancel.")
+        (dolist (entry targets)
+          (let ((source (plist-get entry :source))
+                (sub (plist-get entry :subscription)))
+            (when (and sub (buffer-live-p source))
+              (with-current-buffer source
+                (agent-shell-unsubscribe :subscription sub))))
+          (my/agent-pipe--drop-entry entry))
+        (message "Cancelled %d pipe(s)." (length targets)))))
+
+  )
+
+;; (use-package websocket
+;;   :straight t)
+;;
+;; (use-package agent-shell-to-go
+;;   :straight (:host github :repo "ElleNajt/agent-shell-to-go")
+;;   :after (agent-shell websocket)
+;;   :config
+;;   (setq agent-shell-to-go-authorized-users '("U0AFSV2K0UC"))
+;;   (setq agent-shell-to-go-debug t)
+;;   (setq agent-shell-to-go-bot-token
+;;         (string-trim (shell-command-to-string "/home/juanpablo/.nix-profile/bin/op item get slack/agent-shell-bot-token --vault automation --fields password --reveal")))
+;;   (setq agent-shell-to-go-channel-id
+;;         (string-trim (shell-command-to-string "/home/juanpablo/.nix-profile/bin/op item get slack/agent-shell-channel-id --vault automation --fields password --reveal")))
+;;   (setq agent-shell-to-go-app-token
+;;         (string-trim (shell-command-to-string "/home/juanpablo/.nix-profile/bin/op item get slack/agent-shell-app-token --vault automation --fields password --reveal")))
+;;   (agent-shell-to-go-setup))
 #+end_src
 
 
