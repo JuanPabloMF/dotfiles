@@ -12,9 +12,6 @@
 (add-hook 'emacs-startup-hook
           (lambda () (setq gc-cons-threshold 100000000)))
 
-(require 'package)
-(setq package-enable-at-startup nil)
-
 ;; Set guix home profile as environment variable
 (setenv "GUIX_PROFILE" (expand-file-name "~/.guix-home/profile"))
 
@@ -28,8 +25,6 @@
 (let ((default-directory (expand-file-name "~/.emacs.d/site-lisp/")))
   (normal-top-level-add-subdirs-to-load-path))
 
-(add-to-list 'package-archives '("melpa" . "https://melpa.org/packages/") t)
-(package-initialize)
 (require 's)
 (require 'use-package)
 
@@ -196,6 +191,11 @@ enjoy using a lot."
   (interactive "cJump to register and end of line: ")
   (jump-to-register register)
   (end-of-line))
+
+(defun my/tangle-emacs-config ()
+  "Tangle ~/.emacs.d/emacs.org to ~/.emacs."
+  (interactive)
+  (org-babel-tangle-file (expand-file-name "~/.emacs.d/emacs.org")))
 #+end_src
 
 * Keybindings
@@ -222,7 +222,8 @@ enjoy using a lot."
      "M-o" 'ace-window
      "C-x b" 'ibuffer
      "C-x C-b" 'counsel-switch-buffer
-     "C-c r e" 'jump-to-register-end-of-line)
+     "C-c r e" 'jump-to-register-end-of-line
+     "C-c t" 'my/tangle-emacs-config)
     ("C-c a" 'agent-shell
      "C-c c" 'claude-code-ide-menu
      "C-c g" 'gptel-menu
@@ -266,7 +267,9 @@ enjoy using a lot."
      "C-c | g" 'my/agent-pipe-grab
      "C-c | a" 'my/agent-pipe-ask
      "C-c | f" 'my/agent-pipe-ask-fresh
-     "C-c | c" 'my/agent-pipe-cancel))))
+     "C-c | c" 'my/agent-pipe-cancel)
+    (markdown-mode-map
+     "C-c C-c g" 'grip-mode))))
 #+end_src
 
 #+RESULTS:
@@ -695,22 +698,41 @@ enjoy using a lot."
   :straight (:type git :host github :repo "xenodium/acp.el")
   :defer t)
 
-;; --- Guix workaround for claude-agent-acp's bundled native binary ---
+;; --- Claude Agent SDK native binary on Guix (RESOLVED — no workaround) ---
 ;; agent-shell talks to Claude Code via @agentclientprotocol/claude-agent-acp,
-;; which uses the Claude Agent SDK directly (NOT the `claude` CLI on PATH).
-;; The SDK looks for a bundled "native" binary at:
+;; which uses the bundled Claude Agent SDK directly (NOT the `claude` CLI on
+;; PATH). The SDK spawns its OWN self-contained, version-matched native binary:
 ;;   ~/.npm-global/lib/node_modules/@agentclientprotocol/claude-agent-acp/\
 ;;     node_modules/@anthropic-ai/claude-agent-sdk-linux-x64/claude
-;; That bundled ELF fails on Guix ("cannot execute: required file not found")
-;; because its dynamic linker /lib64/ld-linux-x86-64.so.2 does not exist.
-;; The native-installer binary at ~/.local/bin/claude has the same problem
-;; (same ELF, no patchelf), so don't bother with that one. Use the npm-global
-;; Node-wrapper claude instead — it runs through Guix's Node and works:
-;;   ln -sf ~/.npm-global/bin/claude \
-;;     ~/.npm-global/lib/node_modules/@agentclientprotocol/claude-agent-acp/\
-;;       node_modules/@anthropic-ai/claude-agent-sdk-linux-x64/claude
-;; Re-apply after every `npm i -g @agentclientprotocol/claude-agent-acp`.
-;; Alternative: (setenv "CLAUDE_CODE_EXECUTABLE" "/home/juanpablo/.npm-global/bin/claude")
+;; It's a plain glibc ELF: it needs /lib64/ld-linux-x86-64.so.2 AND libc.so.6 &
+;; friends. On the bare host neither exists (the `claude` CLI only works because
+;; it runs inside a guix --emulate-fhs container). The permanent fix lives in the
+;; SYSTEM config (toretto.scm): two extra-special-file entries symlink
+;; /lib -> glibc-for-fhs/lib and /lib64 -> /lib, so native binaries run on the
+;; host after `guix system reconfigure`. Nothing to do here in Emacs.
+;;
+;; DO NOT re-add the old symlink workaround that repointed this binary at
+;; ~/.npm-global/bin/claude (the @anthropic-ai/claude-code CLI). That CLI's
+;; bin/claude.exe is a postinstall-materialized hardlink that reverts to a stub
+;; whenever claude-code is reinstalled/updated — which is exactly what kept
+;; breaking agent-shell with "native binary not found". The SDK's own binary is
+;; independent of the claude-code package; leave it alone. If a future
+;; `npm i -g @agentclientprotocol/claude-agent-acp` ever ships a bad binary,
+;; just reinstall the adapter (`--include=optional`) — never symlink it to the
+;; CLI again.
+;;
+;; Reinstall commands (npm prefix is ~/.npm-global, so NO sudo):
+;;   ;; agent-shell adapter (this integration). --include=optional pulls the
+;;   ;; SDK's own native binary; without it you get the stub + "native binary
+;;   ;; not found" trap. Add --force to force a clean re-extract if the binary
+;;   ;; landed as a tiny stub instead of ~250MB. Restart agent-shell after.
+;;   npm i -g @agentclientprotocol/claude-agent-acp --include=optional
+;;   ;; the `claude` CLI itself (the terminal command; independent of the above)
+;;   npm i -g @anthropic-ai/claude-code
+;; Verify a real binary landed (want ~250MB, not a stub):
+;;   ls -l ~/.npm-global/lib/node_modules/@agentclientprotocol/claude-agent-acp/\
+;;     node_modules/@anthropic-ai/claude-agent-sdk-linux-x64/claude
+;;   ls -l ~/.npm-global/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe
 (use-package agent-shell
   :straight (:type git :host github :repo "xenodium/agent-shell")
   :defer t
@@ -1132,6 +1154,22 @@ With `C-u' cancel all in-flight pipes globally."
 
 #+RESULTS:
 : t
+** Markdown
+#+begin_src emacs-lisp
+(use-package system-packages
+  :straight (:host gitlab :repo "jabranham/system-packages"))
+
+(use-package use-package-ensure-system-package
+  :straight (:host github :repo "waymondo/use-package-ensure-system-package"))
+
+(use-package grip-mode
+  :straight t
+  :defer t
+  :commands (grip-mode)
+  :ensure-system-package
+  ((grip . "pip3 install --user --break-system-packages grip")))
+#+end_src
+
 * Great Packages
 ** Magit
 #+begin_src emacs-lisp
