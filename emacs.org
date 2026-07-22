@@ -193,9 +193,23 @@ enjoy using a lot."
   (end-of-line))
 
 (defun my/tangle-emacs-config ()
-  "Tangle ~/.emacs.d/emacs.org to ~/.emacs."
+  "Tangle ~/.emacs.d/emacs.org to ~/.emacs and reload it."
   (interactive)
-  (org-babel-tangle-file (expand-file-name "~/.emacs.d/emacs.org")))
+  (org-babel-tangle-file (expand-file-name "~/.emacs.d/emacs.org"))
+  (load-file (expand-file-name "~/.emacs")))
+
+(defun my/markdown-preview-region (beg end)
+  "Preview the region between BEG and END as markdown.
+Works from any buffer — copies the region into a temp markdown-mode
+buffer and calls `markdown-preview' on it, so the usual xhtml header
+\(latex.css + MathJax) is applied."
+  (interactive "r")
+  (let ((content (buffer-substring-no-properties beg end)))
+    (with-current-buffer (get-buffer-create "*markdown-preview-region*")
+      (erase-buffer)
+      (insert content)
+      (markdown-mode)
+      (markdown-preview))))
 #+end_src
 
 * Keybindings
@@ -210,10 +224,10 @@ enjoy using a lot."
 ;; An interesting link for this is
 ;; https://yiufung.net/post/emacs-key-binding-conventions-and-why-you-should-try-it/
 
-(use-package general
-  :config
-  (my/general-define-key
-   (("M-w" 'easy-kill
+(use-package general :demand t)
+
+(my/general-define-key
+ (("M-w" 'easy-kill
      "C-@" 'er/expand-region
      "C-s" 'my/swiper-isearch-dwim
      "M-s" 'swiper
@@ -223,7 +237,8 @@ enjoy using a lot."
      "C-x b" 'ibuffer
      "C-x C-b" 'counsel-switch-buffer
      "C-c r e" 'jump-to-register-end-of-line
-     "C-c t" 'my/tangle-emacs-config)
+     "C-c t" 'my/tangle-emacs-config
+     "C-c | m" 'my/markdown-preview-region)
     ("C-c a" 'agent-shell
      "C-c c" 'claude-code-ide-menu
      "C-c g" 'gptel-menu
@@ -257,19 +272,22 @@ enjoy using a lot."
      "C-c | g" 'my/agent-pipe-grab
      "C-c | a" 'my/agent-pipe-ask
      "C-c | f" 'my/agent-pipe-ask-fresh
-     "C-c | c" 'my/agent-pipe-cancel)
+     "C-c | c" 'my/agent-pipe-cancel
+     "C-c | m" 'my/markdown-preview-region)
     (agent-shell-viewport-edit-mode-map
      "C-c | g" 'my/agent-pipe-grab
      "C-c | a" 'my/agent-pipe-ask
      "C-c | f" 'my/agent-pipe-ask-fresh
-     "C-c | c" 'my/agent-pipe-cancel)
+     "C-c | c" 'my/agent-pipe-cancel
+     "C-c | m" 'my/markdown-preview-region)
     (agent-shell-viewport-view-mode-map
      "C-c | g" 'my/agent-pipe-grab
      "C-c | a" 'my/agent-pipe-ask
      "C-c | f" 'my/agent-pipe-ask-fresh
-     "C-c | c" 'my/agent-pipe-cancel)
+     "C-c | c" 'my/agent-pipe-cancel
+     "C-c | m" 'my/markdown-preview-region)
     (markdown-mode-map
-     "C-c C-c g" 'grip-mode))))
+     "C-c C-c g" 'markdown-preview)))
 #+end_src
 
 #+RESULTS:
@@ -682,6 +700,10 @@ enjoy using a lot."
 (use-package eat
   :defer t
   :commands (eat eat-project))
+
+(use-package coterm
+  :straight t
+  :hook (after-init . coterm-mode))
 
 (use-package claude-code-ide
   :straight (:type git :host github :repo "manzaltu/claude-code-ide.el")
@@ -1161,6 +1183,25 @@ With `C-u' cancel all in-flight pipes globally."
 
 (use-package use-package-ensure-system-package
   :straight (:host github :repo "waymondo/use-package-ensure-system-package"))
+
+(use-package markdown-mode
+  :straight t
+  :defer t
+  :mode ("\\.md\\'" . markdown-mode)
+  :custom
+  ;; Render with pandoc so $...$ / $$...$$ become MathJax-compatible markup.
+  ;; The +tex_math_dollars extension enables dollar-delimited math parsing.
+  (markdown-command
+   "pandoc --from=markdown+tex_math_dollars+tex_math_single_backslash --to=html5 --mathjax")
+  ;; Injected into the <head> of the preview HTML: latex.css gives the page
+  ;; LaTeX-paper typography (Latin Modern serif, proper leading, styled
+  ;; headings) so MathJax feels native inside it. MathJax renders the
+  ;; \\(...\\) / \\[...\\] emitted by pandoc --mathjax.
+  (markdown-xhtml-header-content
+   (concat
+    "<link rel=\"stylesheet\" href=\"https://latex.now.sh/style.css\">"
+    "<script>MathJax = { chtml: { scale: 0.85, matchFontHeight: true } };</script>"
+    "<script async src=\"https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js\"></script>")))
 
 (use-package grip-mode
   :straight t
