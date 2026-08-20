@@ -61,9 +61,6 @@
       (eval-print-last-sexp)))
   (load bootstrap-file nil 'nomessage))
 
-;; Load transient from straight.el before built-in version (Emacs 30 compatibility)
-(straight-use-package 'transient)
-
 ;; Suppress obsolete docker-tramp warning (installed via Guix, use tramp-container instead)
 (with-eval-after-load 'warnings
   (add-to-list 'warning-suppress-types '(tramp))
@@ -226,6 +223,9 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
 
 (use-package general :demand t)
 
+;; Free `C-c a' so it can act as a prefix (was bound to `agent-shell').
+(global-unset-key (kbd "C-c a"))
+
 (my/general-define-key
  (("M-w" 'easy-kill
      "C-@" 'er/expand-region
@@ -239,7 +239,11 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
      "C-c r e" 'jump-to-register-end-of-line
      "C-c t" 'my/tangle-emacs-config
      "C-c | m" 'my/markdown-preview-region)
-    ("C-c a" 'agent-shell
+    ("C-c a a" 'agent-shell
+     "C-c a h" 'agent-shell-hq-toggle
+     "C-c a p" 'agent-shell-hq-peek
+     "C-c a r" 'agent-recall-search-live
+     "C-c a b" 'agent-recall-browse
      "C-c c" 'claude-code-ide-menu
      "C-c g" 'gptel-menu
      "C-c e" 'elfeed
@@ -755,6 +759,12 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
 ;;   ls -l ~/.npm-global/lib/node_modules/@agentclientprotocol/claude-agent-acp/\
 ;;     node_modules/@anthropic-ai/claude-agent-sdk-linux-x64/claude
 ;;   ls -l ~/.npm-global/lib/node_modules/@anthropic-ai/claude-code/bin/claude.exe
+
+(defun my/update-claude-agent-acp ()
+  "Update @agentclientprotocol/claude-agent-acp (bundled Claude Agent SDK)."
+  (interactive)
+  (async-shell-command "npm i -g @agentclientprotocol/claude-agent-acp --include=optional"))
+
 (use-package agent-shell
   :straight (:type git :host github :repo "xenodium/agent-shell")
   :defer t
@@ -772,6 +782,28 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
         '(display-buffer-pop-up-window))
   ;; Default ("/usr/bin/import") doesn't exist on Guix; resolve via PATH.
   (setq agent-shell-screenshot-command '("import"))
+  ;; Upstream regression (e5c8cd4): the xclip handler's `when-let*' guard
+  ;; silently falls through to `call-process' when `gui-get-selection'
+  ;; returns nil, deadlocking Emacs whenever it owns the CLIPBOARD (C-y
+  ;; after a kill hangs). Restore the pre-refactor invariant: error unless
+  ;; image/png is explicitly present.
+  (dolist (h agent-shell-clipboard-image-handlers)
+    (when (equal (map-elt h :command) "xclip")
+      (setcdr (assq :save h)
+              (lambda (file-path)
+                (unless (and (eq (window-system) 'x)
+                             (let ((targets (gui-get-selection 'CLIPBOARD 'TARGETS)))
+                               (and (vectorp targets)
+                                    (seq-contains-p targets 'image/png))))
+                  (error "No image/png in clipboard"))
+                (with-temp-buffer
+                  (set-buffer-multibyte nil)
+                  (let ((exit-code (call-process "xclip" nil t nil
+                                                 "-selection" "clipboard"
+                                                 "-t" "image/png" "-o")))
+                    (unless (zerop exit-code)
+                      (error "Command xclip failed with exit code %d" exit-code))
+                    (write-region (point-min) (point-max) file-path nil 'silent)))))))
   (defun my/agent-shell-dired-marked-only ()
     "Return context for dired marked files only, ignoring file at point."
     (when (derived-mode-p 'dired-mode)
@@ -1066,22 +1098,117 @@ With `C-u' cancel all in-flight pipes globally."
 
   )
 
-;; (use-package websocket
-;;   :straight t)
-;;
-;; (use-package agent-shell-to-go
-;;   :straight (:host github :repo "ElleNajt/agent-shell-to-go")
-;;   :after (agent-shell websocket)
-;;   :config
-;;   (setq agent-shell-to-go-authorized-users '("U0AFSV2K0UC"))
-;;   (setq agent-shell-to-go-debug t)
-;;   (setq agent-shell-to-go-bot-token
-;;         (string-trim (shell-command-to-string "/home/juanpablo/.nix-profile/bin/op item get slack/agent-shell-bot-token --vault automation --fields password --reveal")))
-;;   (setq agent-shell-to-go-channel-id
-;;         (string-trim (shell-command-to-string "/home/juanpablo/.nix-profile/bin/op item get slack/agent-shell-channel-id --vault automation --fields password --reveal")))
-;;   (setq agent-shell-to-go-app-token
-;;         (string-trim (shell-command-to-string "/home/juanpablo/.nix-profile/bin/op item get slack/agent-shell-app-token --vault automation --fields password --reveal")))
-;;   (agent-shell-to-go-setup))
+(use-package agent-shell-tramp
+  :straight (:type git :host github :repo "junyi-hou/agent-shell-tramp")
+  :after agent-shell
+  :config
+  (agent-shell-tramp-mode 1))
+
+(use-package websocket
+  :straight t)
+
+(use-package agent-shell-to-go
+  :straight (:host github :repo "ElleNajt/agent-shell-to-go")
+  :after (agent-shell websocket)
+  :config
+  (setq agent-shell-to-go-authorized-users '("U0AFSV2K0UC"))
+  (setq agent-shell-to-go-debug t)
+
+  (defun my/op-item-password (item)
+    "Return the password field of ITEM from the `automation' 1Password vault.
+
+Authenticates with the OP_SERVICE_ACCOUNT_TOKEN from ~/.secrets.env, not
+with the desktop app. The desktop-app path only works when the 1Password
+GUI happens to be running and unlocked; when it isn't, `op' writes an
+error to stderr and Emacs would happily store that error text as if it
+were a secret. Slack then rejects it with a baffling `invalid_auth'.
+
+The token is sourced inside the subshell rather than pushed into
+`process-environment', so it stays out of every other subprocess Emacs
+spawns -- notably the agent processes started by `agent-shell'.
+
+Signals an error (rather than returning junk) if the lookup fails."
+    (with-temp-buffer
+      (let ((status (call-process
+                     "sh" nil t nil "-c"
+                     (concat ". \"$HOME/.secrets.env\" && "
+                             "exec env LD_LIBRARY_PATH= /opt/1Password/op item get "
+                             (shell-quote-argument item)
+                             " --vault automation --fields password --reveal"))))
+        (unless (eq status 0)
+          (error "op: cannot read %s (exit %s): %s"
+                 item status (string-trim (buffer-string))))
+        (let ((value (string-trim (buffer-string))))
+          (when (string-empty-p value)
+            (error "op: %s is empty" item))
+          value))))
+
+  (defun my/agent-shell-to-go-init ()
+    "Load Slack credentials from 1Password and start the Slack bridge.
+Interactive so it can be re-run after fixing a credential problem,
+without restarting Emacs."
+    (interactive)
+    (setq agent-shell-to-go-bot-token
+          (my/op-item-password "slack/agent-shell-bot-token"))
+    (setq agent-shell-to-go-channel-id
+          (my/op-item-password "slack/agent-shell-channel-id"))
+    (setq agent-shell-to-go-app-token
+          (my/op-item-password "slack/agent-shell-app-token"))
+    (agent-shell-to-go-setup)
+    (message "agent-shell-to-go: connected"))
+
+  ;; Kept off the init path: three `op' round-trips cost ~4s, and a
+  ;; credential failure here shouldn't abort the rest of `:config'.
+  (run-with-idle-timer
+   1 nil
+   (lambda ()
+     (condition-case err
+         (my/agent-shell-to-go-init)
+       (error
+        (message "agent-shell-to-go: %s -- fix, then M-x my/agent-shell-to-go-init"
+                 (error-message-string err)))))))
+
+(use-package agent-recall
+  :straight (:host github :repo "Marx-A00/agent-recall")
+  :after agent-shell
+  :hook (agent-shell-mode . agent-recall-track-sessions)
+  :commands (agent-recall-reindex
+             agent-recall-search
+             agent-recall-browse
+             agent-recall-resume
+             agent-recall-stats)
+  :config
+  (setq agent-recall-search-paths '("~/work" "~/.emacs.d")
+        agent-recall-search-function 'counsel-rg)
+  ;; Sort live-search hits newest-first by mtime. Upstream hardcodes the rg
+  ;; command and ignores `agent-recall-search-extra-args', so redefine.
+  (defun agent-recall--search-via-counsel-rg (query _dirs)
+    (unless (fboundp 'counsel-rg)
+      (user-error "Counsel is not installed"))
+    (let* ((dir (agent-recall--ensure-symlink-dir))
+           (counsel-rg-base-command
+            (append (list "rg" "--max-columns" "240" "--with-filename"
+                          "--no-heading" "--line-number" "--color" "never"
+                          "--follow" "--sortr=modified")
+                    (cl-mapcan (lambda (pat) (list "--glob" pat))
+                               (agent-recall--file-patterns))
+                    (list "%s"))))
+      (counsel-rg query dir "" "Recall: ")
+      (when (and agent-recall-auto-transcript-mode
+                 (agent-recall--transcript-file-p (buffer-file-name)))
+        (agent-recall-transcript-mode 1)))))
+
+(use-package agent-shell-hq
+  :straight (:host github :repo "SreenivasVRao/agent-shell-hq"
+             :files ("*.el"))
+  :after agent-shell
+  :commands (agent-shell-hq-toggle
+             agent-shell-hq-peek
+             agent-shell-hq-label)
+  :init
+  (with-eval-after-load 'agent-shell-hq-peek
+    (define-key agent-shell-hq-peek-map (kbd "C-n") #'agent-shell-hq-peek-next)
+    (define-key agent-shell-hq-peek-map (kbd "C-p") #'agent-shell-hq-peek-prev)))
 #+end_src
 
 
@@ -1214,6 +1341,8 @@ With `C-u' cancel all in-flight pipes globally."
 * Great Packages
 ** Magit
 #+begin_src emacs-lisp
+(use-package transient :straight (:type built-in))
+
 (use-package magit
   :defer t
   :commands (magit-status magit-dispatch magit-file-dispatch))
@@ -1243,4 +1372,53 @@ With `C-u' cancel all in-flight pipes globally."
 #+end_src
 
 #+RESULTS:
+
+** Keyfreq
+
+Track command-invocation counts so we can see which packages actually
+earn their keep. =M-x keyfreq-show= for the raw ranked list of
+commands; =M-x my/keyfreq-by-package= to roll counts up by defining
+package.
+
+#+begin_src emacs-lisp
+(use-package keyfreq
+  :straight t
+  :config
+  (require 'json)
+  (keyfreq-mode 1)
+  (keyfreq-autosave-mode 1)
+
+  (defun my/keyfreq-by-package ()
+    "Show keyfreq counts grouped by the package that defines each command."
+    (interactive)
+    (let ((totals (make-hash-table :test 'equal))
+          (grand-total 0))
+      (maphash
+       (lambda (k count)
+         (let* ((cmd (cdr k))
+                (file (and (symbolp cmd)
+                           (ignore-errors (symbol-file cmd 'defun))))
+                (pkg (if file
+                         (file-name-base file)
+                       "<builtin/unknown>")))
+           (puthash pkg (+ count (gethash pkg totals 0)) totals)
+           (setq grand-total (+ grand-total count))))
+       keyfreq-table)
+      (let (rows)
+        (maphash (lambda (p c) (push (cons p c) rows)) totals)
+        (setq rows (sort rows (lambda (a b) (> (cdr a) (cdr b)))))
+        (with-current-buffer (get-buffer-create "*keyfreq by package*")
+          (let ((inhibit-read-only t))
+            (erase-buffer)
+            (insert (format "%-40s %10s %8s\n" "Package" "Count" "%"))
+            (insert (make-string 62 ?-) "\n")
+            (dolist (row rows)
+              (insert (format "%-40s %10d %7.2f%%\n"
+                              (car row) (cdr row)
+                              (if (zerop grand-total) 0.0
+                                (* 100.0 (/ (cdr row) (float grand-total)))))))
+            (goto-char (point-min)))
+          (special-mode)
+          (pop-to-buffer (current-buffer)))))))
+#+end_src
 
