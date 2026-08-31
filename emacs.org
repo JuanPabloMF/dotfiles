@@ -242,8 +242,10 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
     ("C-c a a" 'agent-shell
      "C-c a h" 'agent-shell-hq-toggle
      "C-c a p" 'agent-shell-hq-peek
-     "C-c a r" 'agent-recall-search-live
+     "C-c a w" 'my/agent-shell-worktree-shell
+     "C-c a r" 'agent-recall-resume
      "C-c a b" 'agent-recall-browse
+     "C-c a R" 'agent-recall-search-live
      "C-c c" 'claude-code-ide-menu
      "C-c g" 'gptel-menu
      "C-c e" 'elfeed
@@ -764,6 +766,40 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
   "Update @agentclientprotocol/claude-agent-acp (bundled Claude Agent SDK)."
   (interactive)
   (async-shell-command "npm i -g @agentclientprotocol/claude-agent-acp --include=optional"))
+
+;; Emacs equivalent of `claude --worktree featureA'. Upstream ships
+;; `agent-shell-new-worktree-shell', but it always invents a random
+;; docker-style name and prompts with `read-directory-name'. This asks for a
+;; name instead (defaulting to the random one, like a bare `--worktree'), and
+;; reuses an existing branch when there is one.
+;; Top level (not in :config) so the key binding works before agent-shell loads.
+(defun my/agent-shell-worktree-shell (name)
+  "Create git worktree NAME and start an agent shell in it.
+
+The worktree lives at <project-root>/.agent-shell/worktrees/NAME, which
+`agent-shell' adds to .git/info/exclude on first use.  When branch NAME
+already exists it is checked out, otherwise it is created off HEAD."
+  (interactive
+   (progn
+     (require 'agent-shell)
+     (let ((default (agent-shell-worktree--generate-name)))
+       (list (read-string (format "Worktree name (default %s): " default)
+                          nil nil default)))))
+  (require 'agent-shell)
+  (unless (agent-shell-worktree--git-repo-root)
+    (user-error "Not in a git repository"))
+  (let ((path (file-name-concat (agent-shell--dot-subdir "worktrees") name)))
+    (unless (file-directory-p path)
+      (let ((args (if (zerop (call-process "git" nil nil nil "show-ref" "--verify"
+                                           "--quiet" (concat "refs/heads/" name)))
+                      (list "worktree" "add" path name)
+                    (list "worktree" "add" "-b" name path))))
+        (with-temp-buffer
+          (unless (zerop (apply #'call-process "git" nil t nil args))
+            (user-error "Failed to create worktree: %s"
+                        (string-trim (buffer-string)))))))
+    (let ((default-directory (file-name-as-directory path)))
+      (agent-shell '(4)))))
 
 (use-package agent-shell
   :straight (:type git :host github :repo "xenodium/agent-shell")
