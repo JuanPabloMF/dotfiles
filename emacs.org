@@ -243,6 +243,8 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
      "C-c a h" 'agent-shell-hq-toggle
      "C-c a p" 'agent-shell-hq-peek
      "C-c a w" 'my/agent-shell-worktree-shell
+     "C-c a s" 'my/agent-shell-worktree-switch
+     "C-c a W" 'my/agent-shell-worktree-remove
      "C-c a r" 'agent-recall-resume
      "C-c a b" 'agent-recall-browse
      "C-c a R" 'agent-recall-search-live
@@ -335,7 +337,32 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
 
 (use-package counsel-tramp
   :defer t
-  :commands (counsel-tramp))
+  :commands (counsel-tramp)
+  :config
+  ;; Per host, counsel-tramp only offers "/<tramp-default-method>:host:" (scp)
+  ;; and the "/ssh:host|sudo:root@host:/" hop. Neither is configurable beyond
+  ;; those two methods, so add extra plain-method candidates by advice.
+  (defvar my/counsel-tramp-extra-methods '("sshxa")
+    "Extra TRAMP methods to offer per host in `counsel-tramp'.
+Each yields an additional \"/<method>:host:\" candidate alongside the
+`tramp-default-method' one.  \"sshxa\" is the method defined under Tramp
+below (ssh with agent forwarding); see `tramp-methods' for stock ones.")
+
+  (defun my/counsel-tramp-extra-candidates (hosts)
+    "Add `my/counsel-tramp-extra-methods' variants to HOSTS."
+    (let ((plain (concat "\\`/" (regexp-quote tramp-default-method)
+                         ":\\([^|:]+\\):\\'"))
+          (result nil))
+      (dolist (host hosts)
+        (push host result)
+        (when (string-match plain host)
+          (let ((target (match-string 1 host)))
+            (dolist (method my/counsel-tramp-extra-methods)
+              (push (concat "/" method ":" target ":") result)))))
+      (delete-dups (nreverse result))))
+
+  (advice-add 'counsel-tramp--candidates :filter-return
+              #'my/counsel-tramp-extra-candidates))
 #+end_src
 
 *** Prescient
@@ -510,6 +537,42 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
   (define-key project-prefix-map "s" #'project-shell)
   (define-key project-prefix-map "d" #'project-dired))
 
+;; `C-x p p` jumps straight to Dired; `C-u C-x p p` shows the dispatch menu.
+(define-advice project-switch-project (:around (orig dir) my/dired-by-default)
+  (let ((project-switch-commands (if current-prefix-arg
+                                     project-switch-commands
+                                   #'project-dired)))
+    (funcall orig dir)))
+
+;; Projectile's `C-c p F': one flat completion list over every known project.
+(defvar my/project--all-files-cache nil
+  "Cached file list spanning all known projects.")
+
+(defun my/project--all-files (&optional refresh)
+  "Return the files of every known project, cached.
+Non-nil REFRESH rebuilds the cache."
+  (when (or refresh (null my/project--all-files-cache))
+    (setq my/project--all-files-cache
+          (mapcan
+           (lambda (root)
+             (and (not (file-remote-p root))
+                  (file-directory-p root)
+                  (let ((pr (project-current nil root)))
+                    (and pr (ignore-errors (project-files pr))))))
+           (project-known-project-roots))))
+  my/project--all-files-cache)
+
+(defun my/project-find-file-in-known-projects (&optional refresh)
+  "Find a file across all known projects.
+With prefix argument REFRESH, rebuild the file cache first."
+  (interactive "P")
+  (find-file
+   (completing-read "Find file (all projects): "
+                    (my/project--all-files refresh) nil t)))
+
+(with-eval-after-load 'project
+  (define-key project-prefix-map "F" #'my/project-find-file-in-known-projects))
+
 ;; Remember additional project directories
 (project-remember-project (cons 'transient "~/work/orgfiles/"))
 #+end_src
@@ -677,6 +740,12 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
                  :description "The URL to read"))
    :category "web"))
 
+;; Talk to a persistent gptel session from anywhere; replies land in an
+;; overlay at point instead of in the chat buffer.  M-x gptel-inline
+(use-package gptel-inline
+  :straight (:host github :repo "karthink/gptel-inline")
+  :after gptel)
+
 (with-eval-after-load 'gptel-transient
   (transient-define-suffix gptel--suffix-jump-to-gptel-buffer ()
     "Jump to an existing gptel buffer or create a new one."
@@ -773,33 +842,246 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
 ;; name instead (defaulting to the random one, like a bare `--worktree'), and
 ;; reuses an existing branch when there is one.
 ;; Top level (not in :config) so the key binding works before agent-shell loads.
-(defun my/agent-shell-worktree-shell (name)
+(defun my/agent-shell--branch-exists-p (branch)
+  "Return non-nil when local BRANCH exists in the ambient repository."
+  (zerop (call-process "git" nil nil nil "show-ref" "--verify" "--quiet"
+                       (concat "refs/heads/" branch))))
+
+(defun my/agent-shell--head-ref ()
+  "Return the checked out branch, or nil when HEAD is detached."
+  (with-temp-buffer
+    (when (zerop (call-process "git" nil t nil
+                               "symbolic-ref" "--quiet" "--short" "HEAD"))
+      (string-trim (buffer-string)))))
+
+(defun my/agent-shell--read-start-point ()
+  "Read the ref a new worktree branch should start from.
+
+Defaults to HEAD, so a bare RET reproduces the no-prefix-argument
+behaviour.  Input is free form on purpose: tags and SHAs are legitimate
+start points and would not show up in the branch list.  Validation
+happens at creation time."
+  (let* ((head (my/agent-shell--head-ref))
+         (refs (with-temp-buffer
+                 (unless (zerop (call-process "git" nil t nil "for-each-ref"
+                                              "--format=%(refname:short)"
+                                              ;; origin/HEAD is a symref, and it
+                                              ;; abbreviates to a bare "origin",
+                                              ;; so filtering the short names
+                                              ;; after the fact misses it.
+                                              "--exclude=refs/remotes/*/HEAD"
+                                              "refs/heads" "refs/remotes"))
+                   (user-error "Failed to list refs: %s"
+                               (string-trim (buffer-string))))
+                 (split-string (buffer-string) "\n" t))))
+    (completing-read (format "Start worktree from (default %s): " (or head "HEAD"))
+                     (delete-dups (append (when head (list head)) refs))
+                     nil nil nil nil (or head "HEAD"))))
+
+(defun my/agent-shell--worktrees-dir ()
+  "Return .agent-shell/worktrees/ under the repository's main worktree.
+
+`agent-shell--dot-subdir' resolves against `agent-shell-cwd', which is the
+project root of the calling buffer -- inside a linked worktree, that is the
+worktree itself.  Left alone it parks each new tree under whichever one you
+happened to call from, so worktrees end up nested inside each other.  Pin
+the main worktree instead, so every tree is a sibling under one directory."
+  (let* ((main (file-name-as-directory (my/agent-shell--main-worktree)))
+         (default-directory main)
+         (agent-shell-cwd-function (lambda () main)))
+    (agent-shell--dot-subdir "worktrees")))
+
+(defun my/agent-shell-worktree-shell (name &optional start-point)
   "Create git worktree NAME and start an agent shell in it.
 
-The worktree lives at <project-root>/.agent-shell/worktrees/NAME, which
-`agent-shell' adds to .git/info/exclude on first use.  When branch NAME
-already exists it is checked out, otherwise it is created off HEAD."
+The worktree lives at <main-worktree>/.agent-shell/worktrees/NAME, which
+`agent-shell' adds to .git/info/exclude on first use.  The path is anchored
+on the main worktree, so calling this from inside a linked worktree still
+produces a sibling rather than a tree nested inside the caller.  When branch
+NAME already exists it is checked out as is, otherwise it is created off
+START-POINT, defaulting to HEAD.
+
+With a prefix argument, prompt for START-POINT -- any branch, tag or SHA.
+Note that HEAD here means the HEAD of whatever repository the calling
+buffer sits in, so invoking this from inside another worktree branches
+off that worktree, not off the main one.  The prompt is skipped when
+branch NAME already exists: git takes no start point when checking out
+an existing branch, and the branch keeps pointing where it did."
   (interactive
    (progn
      (require 'agent-shell)
-     (let ((default (agent-shell-worktree--generate-name)))
-       (list (read-string (format "Worktree name (default %s): " default)
-                          nil nil default)))))
+     (let* ((default (agent-shell-worktree--generate-name))
+            (name (read-string (format "Worktree name (default %s): " default)
+                               nil nil default)))
+       (list name
+             (when (and current-prefix-arg
+                        (not (my/agent-shell--branch-exists-p name)))
+               (my/agent-shell--read-start-point))))))
   (require 'agent-shell)
   (unless (agent-shell-worktree--git-repo-root)
     (user-error "Not in a git repository"))
-  (let ((path (file-name-concat (agent-shell--dot-subdir "worktrees") name)))
+  (when (and start-point
+             (not (zerop (call-process "git" nil nil nil "rev-parse" "--verify"
+                                       "--quiet"
+                                       (concat start-point "^{commit}")))))
+    (user-error "Not a commit to start from: %s" start-point))
+  (let ((path (file-name-concat (my/agent-shell--worktrees-dir) name)))
     (unless (file-directory-p path)
-      (let ((args (if (zerop (call-process "git" nil nil nil "show-ref" "--verify"
-                                           "--quiet" (concat "refs/heads/" name)))
-                      (list "worktree" "add" path name)
-                    (list "worktree" "add" "-b" name path))))
+      (let ((args (cond
+                   ((my/agent-shell--branch-exists-p name)
+                    (list "worktree" "add" path name))
+                   (start-point
+                    (list "worktree" "add" "-b" name path start-point))
+                   (t
+                    (list "worktree" "add" "-b" name path)))))
         (with-temp-buffer
           (unless (zerop (apply #'call-process "git" nil t nil args))
             (user-error "Failed to create worktree: %s"
                         (string-trim (buffer-string)))))))
     (let ((default-directory (file-name-as-directory path)))
       (agent-shell '(4)))))
+
+;; Worktree lifecycle. Upstream (and the command above) only ever creates:
+;; nothing lists, switches to, or tears a worktree down, so stale trees and
+;; orphaned shells pile up. These close the loop with plain `git' calls, and
+;; act on every linked worktree in the repo -- not just the ones agent-shell
+;; parked under .agent-shell/worktrees/.
+(defun my/agent-shell--worktrees ()
+  "Return this repo's worktrees, in `git worktree list' order.
+
+Each entry is (PATH BRANCH PRUNABLE), where BRANCH is nil for a detached
+worktree and PRUNABLE is non-nil once git considers the tree stale (its
+directory went away).  The first entry is always the main worktree."
+  (require 'agent-shell)
+  (let ((default-directory (or (agent-shell-worktree--git-repo-root)
+                               (user-error "Not in a git repository")))
+        (worktrees '())
+        (path nil) (branch nil) (prunable nil))
+    (with-temp-buffer
+      (unless (zerop (call-process "git" nil t nil "worktree" "list" "--porcelain"))
+        (user-error "Failed to list worktrees: %s" (string-trim (buffer-string))))
+      (goto-char (point-min))
+      (while (not (eobp))
+        (let ((line (buffer-substring-no-properties (line-beginning-position)
+                                                    (line-end-position))))
+          (cond
+           ((string-prefix-p "worktree " line)
+            (setq path (string-remove-prefix "worktree " line)
+                  branch nil
+                  prunable nil))
+           ((string-prefix-p "branch " line)
+            (setq branch (string-remove-prefix
+                          "refs/heads/" (string-remove-prefix "branch " line))))
+           ((string-prefix-p "prunable " line)
+            (setq prunable t))
+           ((and (string-empty-p line) path)
+            (push (list path branch prunable) worktrees)
+            (setq path nil))))
+        (forward-line 1))
+      ;; Porcelain terminates every record with a blank line, but don't drop
+      ;; the last entry if that ever stops being true.
+      (when path
+        (push (list path branch prunable) worktrees)))
+    (nreverse worktrees)))
+
+(defun my/agent-shell--main-worktree ()
+  "Return the repo's main worktree, even when called from a linked one.
+`git rev-parse --show-toplevel' answers with the linked worktree, which is
+the one directory you cannot run `git worktree remove' from."
+  (caar (my/agent-shell--worktrees)))
+
+(defun my/agent-shell--read-worktree (prompt)
+  "Read one of this repo's linked worktrees with PROMPT.
+
+Returns its (PATH BRANCH PRUNABLE) entry.  The main worktree is never
+offered: it is not ours to remove, and it already has `agent-shell'."
+  (let* ((root (file-name-as-directory (my/agent-shell--main-worktree)))
+         (candidates
+          (mapcar (pcase-lambda (`(,path ,branch ,prunable))
+                    (cons (format "%s  [%s]%s"
+                                  (if (string-prefix-p root path)
+                                      (string-remove-prefix root path)
+                                    (abbreviate-file-name path))
+                                  (or branch "detached")
+                                  (if prunable "  (prunable)" ""))
+                          (list path branch prunable)))
+                  (cdr (my/agent-shell--worktrees)))))
+    (unless candidates
+      (user-error "No linked worktrees in this repository"))
+    (cdr (assoc (completing-read prompt candidates nil t) candidates))))
+
+(defun my/agent-shell--kill-buffers-under (dir)
+  "Kill every buffer whose `default-directory' is DIR or below it.
+Runs without prompting: agent shells hold a live ACP process, and the
+default query would stall the removal on each one."
+  (let ((dir (file-name-as-directory (expand-file-name dir)))
+        (kill-buffer-query-functions nil))
+    (dolist (buffer (buffer-list))
+      (let ((buffer-dir (buffer-local-value 'default-directory buffer)))
+        (when (and (stringp buffer-dir) (file-in-directory-p buffer-dir dir))
+          (kill-buffer buffer))))))
+
+(defun my/agent-shell-worktree-switch (worktree)
+  "Start or reuse an agent shell in WORKTREE.
+
+Interactively, pick from this repo's linked worktrees.  Unlike
+`my/agent-shell-worktree-shell' this reuses an existing shell for the
+worktree instead of forcing a new one."
+  (interactive (list (my/agent-shell--read-worktree "Worktree shell: ")))
+  (pcase-let ((`(,path ,_branch ,prunable) worktree))
+    (when prunable
+      (user-error "Worktree is stale, run `my/agent-shell-worktree-prune': %s" path))
+    (let ((default-directory (file-name-as-directory path)))
+      (agent-shell))))
+
+(defun my/agent-shell--delete-branch (branch)
+  "Delete BRANCH, escalating to a forced delete only on confirmation."
+  (with-temp-buffer
+    (unless (zerop (call-process "git" nil t nil "branch" "-d" branch))
+      (let ((failure (string-trim (buffer-string))))
+        (when (yes-or-no-p (format "%s\nForce delete branch %s? " failure branch))
+          (erase-buffer)
+          (unless (zerop (call-process "git" nil t nil "branch" "-D" branch))
+            (user-error "Failed to delete branch: %s"
+                        (string-trim (buffer-string)))))))))
+
+(defun my/agent-shell-worktree-remove (worktree)
+  "Tear down WORKTREE: kill its buffers, drop the tree, offer its branch.
+
+Interactively, pick from this repo's linked worktrees.  A dirty or locked
+worktree is only removed after you confirm the forced removal, and the
+branch survives unless you say otherwise -- the agent's work usually
+lives there and nowhere else."
+  (interactive (list (my/agent-shell--read-worktree "Remove worktree: ")))
+  (pcase-let* ((`(,path ,branch ,_prunable) worktree)
+               (default-directory (my/agent-shell--main-worktree)))
+    (unless (yes-or-no-p (format "Remove worktree %s? " path))
+      (user-error "Aborted"))
+    (my/agent-shell--kill-buffers-under path)
+    (with-temp-buffer
+      (unless (zerop (call-process "git" nil t nil "worktree" "remove" path))
+        (let ((failure (string-trim (buffer-string))))
+          (unless (yes-or-no-p (format "%s\nForce removal? " failure))
+            (user-error "Aborted: %s" failure))
+          (erase-buffer)
+          (unless (zerop (call-process "git" nil t nil
+                                       "worktree" "remove" "--force" path))
+            (user-error "Failed to remove worktree: %s"
+                        (string-trim (buffer-string)))))))
+    (when (and branch (y-or-n-p (format "Also delete branch %s? " branch)))
+      (my/agent-shell--delete-branch branch))
+    (message "Removed worktree %s" path)))
+
+(defun my/agent-shell-worktree-prune ()
+  "Drop git's bookkeeping for worktrees whose directories are gone.
+Reports what it pruned; a no-op when there is nothing stale."
+  (interactive)
+  (let ((default-directory (my/agent-shell--main-worktree)))
+    (with-temp-buffer
+      (unless (zerop (call-process "git" nil t nil "worktree" "prune" "-v"))
+        (user-error "Failed to prune worktrees: %s" (string-trim (buffer-string))))
+      (let ((output (string-trim (buffer-string))))
+        (message "%s" (if (string-empty-p output) "Nothing to prune" output))))))
 
 (use-package agent-shell
   :straight (:type git :host github :repo "xenodium/agent-shell")
@@ -1386,6 +1668,15 @@ without restarting Emacs."
 
 #+RESULTS:
 : t
+
+** Remoto
+Browse GitHub repos without cloning: =C-x C-f /gh:owner/repo=.
+
+#+begin_src emacs-lisp
+(use-package remoto
+  :straight (:host github :repo "agzam/remoto.el")
+  :demand t)
+#+end_src
 
 ** Restclient
 
