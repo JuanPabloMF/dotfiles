@@ -207,6 +207,67 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
       (insert content)
       (markdown-mode)
       (markdown-preview))))
+
+(defvar my/--file-mtime-cache nil
+  "Per-call mtime cache for `my/file-newer-first-p'.
+A comparator runs O(n log n) times; without this every comparison
+would stat the file again.  Let-bound to a fresh hash table by the
+command that installs the sorter, and nil everywhere else.")
+
+(defun my/--file-mtime (f)
+  (if my/--file-mtime-cache
+      (or (gethash f my/--file-mtime-cache)
+          (puthash f (or (file-attribute-modification-time (file-attributes f)) 0)
+                   my/--file-mtime-cache))
+    (or (file-attribute-modification-time (file-attributes f)) 0)))
+
+(defun my/file-newer-first-p (x y)
+  "Sort file candidates newest first.
+Ivy sorts file completion alphabetically, and screenshots are named
+with a timestamp — so the default order is oldest first, which is
+exactly backwards when you want the shot you just took.  Directories
+stay on top and alphabetical so navigation still behaves."
+  (let* ((dir (or (and (boundp 'ivy--directory) ivy--directory) default-directory))
+         (fx (expand-file-name (if (consp x) (car x) x) dir))
+         (fy (expand-file-name (if (consp y) (car y) y) dir))
+         (dx (file-directory-p fx))
+         (dy (file-directory-p fy)))
+    (cond ((and dx (not dy)) t)
+          ((and dy (not dx)) nil)
+          (dx (string< fx fy))
+          (t (time-less-p (my/--file-mtime fy) (my/--file-mtime fx))))))
+
+(defun my/markdown-insert-image-file (file &optional alt)
+  "Insert a Markdown image for FILE, chosen with path completion.
+
+`markdown-insert-image' (C-c C-i) reads its URL with `completing-read'
+over the reference labels DEFINED IN THE BUFFER, so for a brand new
+image there is nothing to complete against and the whole path has to be
+typed by hand.  Here the file is picked with `read-file-name' — TAB
+completion, directory navigation, image files only — and stored
+RELATIVE to the current file, which is what keeps the link working on
+GitHub/GitLab and for anyone who clones the repo.
+
+ALT defaults to the file's base name, so the common case is two RETs.
+`image-file-name-regexp' is autoloaded; no require needed."
+  (interactive
+   (list (let ((my/--file-mtime-cache (make-hash-table :test #'equal))
+               ;; Sorter sólo para ESTA llamada: no cambia el orden del
+               ;; `C-x C-f' de todos los días.
+               (ivy-sort-functions-alist
+                (cons '(read-file-name-internal . my/file-newer-first-p)
+                      (bound-and-true-p ivy-sort-functions-alist)))
+               ;; ivy-prescient reordena por frecuencia de uso y pisaría lo
+               ;; anterior; nil = no ordenar ningún comando. Si prescient no
+               ;; está cargado, este binding es inocuo.
+               (ivy-prescient-sort-commands nil))
+           (read-file-name "Image: " nil nil t nil
+                           (lambda (f) (or (file-directory-p f)
+                                           (string-match-p (image-file-name-regexp) f)))))))
+  (let* ((base (file-name-directory (or buffer-file-name default-directory)))
+         (rel  (file-relative-name (expand-file-name file) base))
+         (alt  (or alt (read-string "Alt text: " (file-name-base file)))))
+    (insert (format "![%s](%s)" alt rel))))
 #+end_src
 
 * Keybindings
@@ -295,7 +356,10 @@ buffer and calls `markdown-preview' on it, so the usual xhtml header
      "C-c | c" 'my/agent-pipe-cancel
      "C-c | m" 'my/markdown-preview-region)
     (markdown-mode-map
-     "C-c C-c g" 'markdown-preview)))
+     "C-c C-c g" 'markdown-preview
+     ;; `C-c i' y no `C-c C-i': el original sigue siendo el bueno para EDITAR
+     ;; una imagen existente (actualiza alt/URL/titulo sobre el punto).
+     "C-c i" 'my/markdown-insert-image-file)))
 #+end_src
 
 #+RESULTS:
@@ -1749,3 +1813,21 @@ package.
           (pop-to-buffer (current-buffer)))))))
 #+end_src
 
+
+** Wasabi (WhatsApp)
+
+Native WhatsApp client. Talks json-rpc over stdio to a =wuzapi= binary
+(built from https://github.com/asternic/wuzapi, installed in
+=~/.local/bin=). Session database lives under the gitignored =data/=
+tree rather than =~/.emacs.d/wasabi=. =M-x wasabi= to start; first run
+shows a QR code to link the phone.
+
+#+begin_src emacs-lisp
+(use-package wasabi
+  :straight (:host github :repo "xenodium/wasabi" :files ("*.el"))
+  :commands (wasabi)
+  :init
+  ;; Must be set before load: `wasabi-wuzapi-command' bakes the data dir
+  ;; into its default value at definition time.
+  (setq wasabi-data-dir (expand-file-name "data/wasabi/" user-emacs-directory)))
+#+end_src
