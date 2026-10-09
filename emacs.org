@@ -68,6 +68,16 @@
 (setq ad-redefinition-action 'accept)
 #+end_src
 
+** Server
+Socket en $XDG_RUNTIME_DIR/emacs/server, para que =emacsclient= (y ~$EDITOR~)
+lleguen a esta instancia. El guard evita el warning cuando ya hay otro Emacs
+dueño del socket.
+#+begin_src emacs-lisp
+(require 'server)
+(unless (server-running-p)
+  (server-start))
+#+end_src
+
 * UI
 #+begin_src emacs-lisp
 (defun my/setup-ui ()
