@@ -1169,6 +1169,8 @@ Reports what it pruned; a no-op when there is nothing stale."
   (setq agent-shell-show-usage-at-turn-end t)
   (setq agent-shell-preferred-agent-config
         (agent-shell-anthropic-make-claude-code-config))
+  ;; Start Claude sessions in auto mode (mode ID from claude-agent-acp).
+  (setq agent-shell-anthropic-default-session-mode-id "auto")
   (setq agent-shell-session-strategy 'new)
   (setq agent-shell-display-action
         '(display-buffer-pop-up-window))
